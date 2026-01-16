@@ -1,0 +1,5 @@
+{
+  "name": "AeroVolt Check",
+  "description": "Um utilitário de conformidade para verificação de regulamentos de transporte de baterias de lítio em aeronaves de passageiros com base nas regras IATA 2026.",
+  "requestFramePermissions": []
+}
