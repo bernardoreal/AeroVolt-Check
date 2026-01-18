@@ -273,18 +273,6 @@ const IMP_CODES = [
     title: 'Cargo Aircraft Only', 
     desc: 'Instrução de carregamento: Proibido em aeronaves de passageiros.', 
     context: 'Deve ser etiquetado com a etiqueta laranja "Cargo Aircraft Only". No sistema, bloqueia o carregamento em voos PAX. Obrigatório para UN 3480 e UN 3090 na LATAM.' 
-  },
-  { 
-    code: 'RCL', 
-    title: 'Cryogenic Liquid', 
-    desc: 'Líquido Criogênico (Classe 2.2).', 
-    context: 'Às vezes associado a sistemas de refrigeração para baterias biológicas ou supercondutores. Requer manuseio vertical ("Keep Upright").' 
-  },
-  { 
-    code: 'ICE', 
-    title: 'Dry Ice (Gelo Seco)', 
-    desc: 'UN 1845 - Dióxido de Carbono Sólido.', 
-    context: 'Usado para refrigerar cargas. Sublima e gera gás CO2. Quando embarcado com baterias, requer ventilação e não pode ser colocado em compartimentos selados hermeticamente.' 
   }
 ];
 
