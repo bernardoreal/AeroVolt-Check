@@ -1,5 +1,6 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
+import Fuse from 'fuse.js';
 import { 
   Book, 
   Search, 
@@ -20,7 +21,10 @@ import {
   GraduationCap,
   Box,
   Menu,
-  ShieldAlert
+  ShieldAlert,
+  FolderOpen,
+  Folder,
+  LayoutGrid
 } from 'lucide-react';
 
 // --- DATASETS EXPANDIDOS ---
@@ -218,6 +222,14 @@ export const SPECIAL_PROVISIONS_DATA = [
     details: 'As etiquetas (Classe 9A, Marca de Lítio, CAO) devem ser losangos perfeitos de 100x100mm. A redução para 100x70mm só é permitida se o tamanho do volume for fisicamente menor que a etiqueta padrão. Etiquetas dobradas (wrap-around) não podem comprometer a legibilidade dos símbolos.'
   },
   { 
+    code: 'A212', 
+    title: 'Data Loggers (Ativos)', 
+    risk: 'low',
+    reference: 'DGR 4.4',
+    desc: 'Regra para rastreadores/sensores ativos anexados à carga.',
+    details: 'Data Loggers, sensores de temperatura ou dispositivos de rastreamento alimentados por baterias pequenas (Seção II) que estejam "ATIVOS" durante o transporte. Não exigem que o volume de carga onde estão anexados seja marcado/etiquetado como DG, desde que o dispositivo em si esteja em conformidade.'
+  },
+  { 
     code: 'A213', 
     title: 'Baterias Instaladas em Carga', 
     risk: 'medium',
@@ -361,6 +373,17 @@ const DGR_SECTIONS_DATA = [
   { section: '9.3', topic: 'Seção 9', title: 'Aceitação', desc: 'Obrigatoriedade do Checklist de Aceitação para garantir conformidade antes do embarque.' },
 ];
 
+const SECTION_TITLES: Record<string, string> = {
+  'Seção 1': 'Aplicabilidade e Treinamento',
+  'Seção 2': 'Limitações (Proibidos/PAX)',
+  'Seção 3': 'Classificação de Risco',
+  'Seção 4': 'Identificação e Listas',
+  'Seção 5': 'Instruções de Embalagem',
+  'Seção 7': 'Marcação e Etiquetagem',
+  'Seção 8': 'Documentação (DGD/AWB)',
+  'Seção 9': 'Manuseio e Aceitação'
+};
+
 type TabType = 'SP' | 'GLOSSARY' | 'PKG' | 'IMP' | 'CHK' | 'DGR';
 
 export function SpecialProvisionsDictionary() {
@@ -368,15 +391,6 @@ export function SpecialProvisionsDictionary() {
   const [activeTab, setActiveTab] = useState<TabType>('SP');
   const [search, setSearch] = useState('');
   const [expandedItem, setExpandedItem] = useState<string | null>(null);
-
-  // Normaliza o texto para busca
-  const normalize = (text: string) => text.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
-
-  const filterData = (data: any[], keys: string[]) => {
-    const s = normalize(search);
-    if (!s) return data;
-    return data.filter(item => keys.some(k => normalize(item[k] || '').includes(s)));
-  };
 
   const toggleExpand = (code: string) => setExpandedItem(prev => prev === code ? null : code);
 
@@ -387,6 +401,215 @@ export function SpecialProvisionsDictionary() {
       case 'low': return 'bg-green-100 text-green-700 border-green-200';
       default: return 'bg-indigo-50 text-indigo-700 border-indigo-200';
     }
+  };
+
+  // --- REUSABLE RENDER FUNCTIONS ---
+  
+  const renderSP = (items: any[]) => (
+    <div className="space-y-3">
+       {items.map((sp) => {
+         const isExpanded = expandedItem === sp.code;
+         return (
+           <div 
+              key={sp.code} 
+              className={`bg-white rounded-2xl border transition-all duration-300 overflow-hidden ${isExpanded ? 'border-indigo-500 shadow-lg ring-1 ring-indigo-500' : 'border-slate-200 hover:border-indigo-300 shadow-sm'}`}
+           >
+              <button 
+                className="w-full text-left p-4 flex items-start gap-4"
+                onClick={() => toggleExpand(sp.code)}
+              >
+                <div className={`shrink-0 w-12 h-12 rounded-xl flex items-center justify-center border text-xs font-black ${getRiskColor(sp.risk)}`}>
+                   {sp.code}
+                </div>
+                <div className="flex-1 min-w-0">
+                   <h3 className="font-bold text-slate-800 truncate">{sp.title}</h3>
+                   <p className="text-xs text-slate-500 mt-1 line-clamp-2">{sp.desc}</p>
+                </div>
+                <ChevronRight size={18} className={`text-slate-300 mt-2 transition-transform duration-300 ${isExpanded ? 'rotate-90 text-indigo-500' : ''}`} />
+              </button>
+              
+              {isExpanded && (
+                 <div className="px-4 pb-4 pt-0 animate-in fade-in slide-in-from-top-1">
+                    <div className="pt-4 border-t border-slate-100 flex flex-col gap-3">
+                       <div className="bg-slate-50 p-3 rounded-lg border border-slate-100">
+                          <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider block mb-1">Explicação Detalhada</span>
+                          <p className="text-xs text-slate-700 leading-relaxed">{sp.details}</p>
+                       </div>
+                       <div className="flex items-center gap-2">
+                          <span className="text-[10px] font-bold text-slate-400 uppercase">Referência:</span>
+                          <span className="text-[10px] font-black text-indigo-600 bg-indigo-50 px-2 py-1 rounded">{sp.reference}</span>
+                       </div>
+                    </div>
+                 </div>
+              )}
+           </div>
+         );
+       })}
+    </div>
+  );
+
+  const renderGlossary = (items: any[]) => (
+    <div className="grid gap-3">
+       {items.map((item, idx) => (
+         <div key={idx} className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm hover:border-coral-200 transition-colors group">
+            <h3 className="font-bold text-indigo-900 mb-1 flex items-center gap-2">
+               {item.term}
+               <GraduationCap size={14} className="text-slate-300 group-hover:text-coral-400" />
+            </h3>
+            <p className="text-sm text-slate-700 font-medium leading-relaxed mb-2">{item.def}</p>
+            <div className="bg-slate-50 px-3 py-2 rounded-lg border border-slate-100 flex gap-2 items-start">
+               <Lightbulb size={14} className="text-amber-500 mt-0.5 shrink-0" />
+               <p className="text-xs text-slate-500 italic">{item.context}</p>
+            </div>
+         </div>
+       ))}
+    </div>
+  );
+
+  const renderPackaging = (items: any[]) => (
+     <div className="grid gap-3">
+        {items.map((pkg, idx) => (
+           <div key={idx} className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col sm:flex-row gap-4 items-start">
+              <div className="bg-slate-900 text-white px-3 py-2 rounded-lg font-mono font-bold text-sm text-center min-w-[60px]">
+                 {pkg.code}
+              </div>
+              <div className="flex-1">
+                 <h4 className="font-bold text-slate-800">{pkg.type}</h4>
+                 <p className="text-xs text-slate-500 mt-1 mb-2">{pkg.desc}</p>
+                 <span className="inline-block bg-green-50 text-green-700 text-[10px] font-bold px-2 py-1 rounded border border-green-100">
+                    {pkg.suitability}
+                 </span>
+              </div>
+           </div>
+        ))}
+     </div>
+  );
+
+  const renderIMP = (items: any[]) => (
+      <div className="space-y-3">
+         {items.map((imp, idx) => (
+            <div key={idx} className="flex items-center gap-4 bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
+               <div className="bg-slate-100 text-slate-600 px-3 py-2 rounded-lg font-black text-sm tracking-widest min-w-[60px] text-center border border-slate-200">
+                  {imp.code}
+               </div>
+               <div>
+                  <h4 className="font-bold text-slate-800 text-sm">{imp.title}</h4>
+                  <p className="text-xs text-slate-500">{imp.desc}</p>
+                  <p className="text-[10px] text-slate-400 mt-1 italic">{imp.context}</p>
+               </div>
+            </div>
+         ))}
+      </div>
+  );
+
+  const renderChecklist = (items: any[]) => (
+      <div className="space-y-3">
+         {items.map((item, idx) => (
+            <div key={idx} className="flex items-start gap-3 bg-white p-3 rounded-xl border border-slate-100 shadow-sm">
+               <div className={`mt-0.5 w-5 h-5 rounded-md flex items-center justify-center shrink-0 ${item.mandated ? 'bg-red-50 text-red-500' : 'bg-slate-100 text-slate-400'}`}>
+                  <CheckSquare size={14} />
+               </div>
+               <div>
+                  <h4 className="text-xs font-bold text-slate-800">
+                     {item.title}
+                     {item.mandated && <span className="ml-2 text-[9px] text-red-500 font-black uppercase bg-red-50 px-1.5 py-0.5 rounded">Mandatório</span>}
+                  </h4>
+                  <p className="text-[10px] text-slate-500 mt-0.5">{item.desc}</p>
+               </div>
+            </div>
+         ))}
+      </div>
+  );
+
+  // Flat list render for search results in DGR
+  const renderDGRFlat = (items: any[]) => (
+      <div className="space-y-3">
+         {items.map((dgr, idx) => (
+            <div key={idx} className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col sm:flex-row gap-4 items-start hover:border-indigo-300 transition-colors group">
+               <div className="shrink-0 flex flex-col items-center gap-1 min-w-[80px]">
+                   <div className="bg-indigo-600 text-white px-2 py-1.5 rounded-lg font-black text-xs text-center w-full shadow-sm">
+                      {dgr.section}
+                   </div>
+                   <span className="text-[9px] font-bold text-indigo-400 uppercase tracking-wide">
+                      {dgr.topic}
+                   </span>
+               </div>
+               <div className="flex-1">
+                  <h4 className="font-bold text-slate-800 text-sm group-hover:text-indigo-700 transition-colors">{dgr.title}</h4>
+                  <p className="text-xs text-slate-600 mt-1 leading-relaxed">{dgr.desc}</p>
+               </div>
+            </div>
+         ))}
+      </div>
+  );
+
+  // Grouped render for DGR Tab (No Search)
+  const renderDGRGrouped = () => {
+     // Agrupamento de Seções
+     const groupedSections = DGR_SECTIONS_DATA.reduce((acc, item) => {
+       if (!acc[item.topic]) acc[item.topic] = [];
+       acc[item.topic].push(item);
+       return acc;
+     }, {} as Record<string, typeof DGR_SECTIONS_DATA>);
+
+     return (
+        <div className="space-y-3">
+          {Object.keys(groupedSections).sort().map((topic) => {
+             const isExpanded = expandedItem === topic;
+             const title = SECTION_TITLES[topic] || topic;
+             
+             return (
+               <div key={topic} className={`bg-white rounded-2xl border transition-all duration-300 overflow-hidden ${isExpanded ? 'border-indigo-500 shadow-lg ring-1 ring-indigo-500' : 'border-slate-200 hover:border-indigo-300 shadow-sm'}`}>
+                   <button 
+                     onClick={() => toggleExpand(topic)}
+                     className="w-full text-left p-4 flex items-center gap-4 bg-slate-50/50 hover:bg-slate-100 transition-colors"
+                   >
+                      <div className={`p-2 rounded-lg transition-colors ${isExpanded ? 'bg-indigo-100 text-indigo-700' : 'bg-white text-slate-400 border border-slate-200'}`}>
+                         {isExpanded ? <FolderOpen size={20} /> : <Folder size={20} />}
+                      </div>
+                      <div className="flex-1">
+                         <h3 className={`font-bold text-sm ${isExpanded ? 'text-indigo-900' : 'text-slate-700'}`}>{topic}</h3>
+                         <p className="text-[10px] font-medium text-slate-500 uppercase tracking-wide">{title}</p>
+                      </div>
+                      <ChevronRight size={18} className={`text-slate-300 transition-transform duration-300 ${isExpanded ? 'rotate-90 text-indigo-500' : ''}`} />
+                   </button>
+
+                   {isExpanded && (
+                      <div className="p-4 pt-0 space-y-3 animate-in fade-in slide-in-from-top-2">
+                         <div className="h-px bg-slate-100 mb-3 mx-2"></div>
+                         {groupedSections[topic].map((dgr, idx) => (
+                            <div key={idx} className="flex gap-3 items-start p-2 rounded-xl hover:bg-slate-50 transition-colors">
+                               <div className="bg-white border border-slate-200 text-indigo-600 px-2 py-1 rounded-md font-mono font-bold text-[10px] shadow-sm mt-0.5 min-w-[48px] text-center">
+                                  {dgr.section}
+                               </div>
+                               <div>
+                                  <h4 className="text-xs font-bold text-slate-800">{dgr.title}</h4>
+                                  <p className="text-[10px] text-slate-500 mt-0.5 leading-relaxed">{dgr.desc}</p>
+                               </div>
+                            </div>
+                         ))}
+                      </div>
+                   )}
+               </div>
+             );
+          })}
+        </div>
+     );
+  };
+
+  const filterData = (data: any[], keys: string[]) => {
+    if (!search.trim()) return data;
+
+    const fuse = new Fuse(data, {
+      keys: keys,
+      threshold: 0.3, // Slightly tighter threshold for better relevance
+      distance: 100,
+      ignoreLocation: true,
+      minMatchCharLength: 2,
+      shouldSort: true,
+    });
+
+    return fuse.search(search).map(res => res.item);
   };
 
   const TabButton = ({ id, label, icon: Icon }: { id: TabType, label: string, icon: any }) => (
@@ -404,6 +627,16 @@ export function SpecialProvisionsDictionary() {
        {label}
      </button>
   );
+
+  // Configuration for all searchable sections
+  const ALL_SECTIONS = [
+     { id: 'SP', label: 'Disposições Especiais', icon: Scale, data: SPECIAL_PROVISIONS_DATA, keys: ['code', 'title', 'desc', 'details'], render: renderSP },
+     { id: 'GLOSSARY', label: 'Glossário', icon: GraduationCap, data: BATTERY_GLOSSARY, keys: ['term', 'def', 'context'], render: renderGlossary },
+     { id: 'PKG', label: 'Embalagens', icon: Box, data: PACKAGING_CODES, keys: ['code', 'type', 'desc'], render: renderPackaging },
+     { id: 'IMP', label: 'Códigos IMP', icon: Tag, data: IMP_CODES, keys: ['code', 'title', 'desc'], render: renderIMP },
+     { id: 'CHK', label: 'Checklist', icon: CheckSquare, data: CHECKLIST_ITEMS, keys: ['title', 'desc'], render: renderChecklist },
+     { id: 'DGR', label: 'Seções DGR', icon: List, data: DGR_SECTIONS_DATA, keys: ['section', 'title', 'desc', 'topic'], render: renderDGRFlat }
+  ];
 
   return (
     <>
@@ -457,186 +690,87 @@ export function SpecialProvisionsDictionary() {
                </div>
            </div>
            
-           {/* Navigation Tabs - Grid Layout */}
-           <div className="px-6 pb-4 grid grid-cols-3 gap-2">
-              <TabButton id="SP" label="Disposições" icon={Scale} />
-              <TabButton id="GLOSSARY" label="Glossário" icon={GraduationCap} />
-              <TabButton id="PKG" label="Embalagens" icon={Box} />
-              <TabButton id="IMP" label="Códigos IMP" icon={Tag} />
-              <TabButton id="CHK" label="Checklist" icon={CheckSquare} />
-              <TabButton id="DGR" label="Seções" icon={List} />
-           </div>
+           {/* Navigation Tabs - Hide when searching to avoid confusion */}
+           {!search && (
+             <div className="px-6 pb-4 grid grid-cols-3 gap-2 animate-in fade-in slide-in-from-top-1">
+                <TabButton id="SP" label="Disposições" icon={Scale} />
+                <TabButton id="GLOSSARY" label="Glossário" icon={GraduationCap} />
+                <TabButton id="PKG" label="Embalagens" icon={Box} />
+                <TabButton id="IMP" label="Códigos IMP" icon={Tag} />
+                <TabButton id="CHK" label="Checklist" icon={CheckSquare} />
+                <TabButton id="DGR" label="Seções" icon={List} />
+             </div>
+           )}
         </div>
 
         {/* Content Area */}
         <div className="flex-1 overflow-y-auto bg-slate-50 p-4 md:p-6 scroll-smooth">
            
-           {/* TAB: DISPOSIÇÕES ESPECIAIS (SP) */}
-           {activeTab === 'SP' && (
-             <div className="space-y-3">
-               {filterData(SPECIAL_PROVISIONS_DATA, ['code', 'title', 'desc']).map((sp) => {
-                 const isExpanded = expandedItem === sp.code;
-                 return (
-                   <div 
-                      key={sp.code} 
-                      className={`bg-white rounded-2xl border transition-all duration-300 overflow-hidden ${isExpanded ? 'border-indigo-500 shadow-lg ring-1 ring-indigo-500' : 'border-slate-200 hover:border-indigo-300 shadow-sm'}`}
-                   >
-                      <button 
-                        className="w-full text-left p-4 flex items-start gap-4"
-                        onClick={() => toggleExpand(sp.code)}
-                      >
-                        <div className={`shrink-0 w-12 h-12 rounded-xl flex items-center justify-center border text-xs font-black ${getRiskColor(sp.risk)}`}>
-                           {sp.code}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                           <h3 className="font-bold text-slate-800 truncate">{sp.title}</h3>
-                           <p className="text-xs text-slate-500 mt-1 line-clamp-2">{sp.desc}</p>
-                        </div>
-                        <ChevronRight size={18} className={`text-slate-300 mt-2 transition-transform duration-300 ${isExpanded ? 'rotate-90 text-indigo-500' : ''}`} />
-                      </button>
-                      
-                      {isExpanded && (
-                         <div className="px-4 pb-4 pt-0 animate-in fade-in slide-in-from-top-1">
-                            <div className="pt-4 border-t border-slate-100 flex flex-col gap-3">
-                               <div className="bg-slate-50 p-3 rounded-lg border border-slate-100">
-                                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider block mb-1">Explicação Detalhada</span>
-                                  <p className="text-xs text-slate-700 leading-relaxed">{sp.details}</p>
-                               </div>
-                               <div className="flex items-center gap-2">
-                                  <span className="text-[10px] font-bold text-slate-400 uppercase">Referência:</span>
-                                  <span className="text-[10px] font-black text-indigo-600 bg-indigo-50 px-2 py-1 rounded">{sp.reference}</span>
-                               </div>
-                            </div>
-                         </div>
-                      )}
-                   </div>
-                 );
-               })}
-             </div>
-           )}
-
-           {/* TAB: GLOSSARY */}
-           {activeTab === 'GLOSSARY' && (
-             <div className="grid gap-3">
-               {filterData(BATTERY_GLOSSARY, ['term', 'def']).map((item, idx) => (
-                 <div key={idx} className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm hover:border-coral-200 transition-colors group">
-                    <h3 className="font-bold text-indigo-900 mb-1 flex items-center gap-2">
-                       {item.term}
-                       <GraduationCap size={14} className="text-slate-300 group-hover:text-coral-400" />
-                    </h3>
-                    <p className="text-sm text-slate-700 font-medium leading-relaxed mb-2">{item.def}</p>
-                    <div className="bg-slate-50 px-3 py-2 rounded-lg border border-slate-100 flex gap-2 items-start">
-                       <Lightbulb size={14} className="text-amber-500 mt-0.5 shrink-0" />
-                       <p className="text-xs text-slate-500 italic">{item.context}</p>
-                    </div>
-                 </div>
-               ))}
-             </div>
-           )}
-
-           {/* TAB: PACKAGING */}
-           {activeTab === 'PKG' && (
-              <div className="space-y-4">
-                 <div className="bg-indigo-50 p-4 rounded-xl border border-indigo-100 flex gap-3">
-                    <Box className="text-indigo-600 shrink-0" />
-                    <div>
-                       <h4 className="font-bold text-indigo-900 text-sm">Códigos de Embalagem UN</h4>
-                       <p className="text-xs text-indigo-800 mt-1">Estrutura: [Tipo][Material][Categoria]. Ex: 4G = Caixa (4) de Papelão (G).</p>
-                    </div>
-                 </div>
-                 <div className="grid gap-3">
-                    {filterData(PACKAGING_CODES, ['code', 'type']).map((pkg, idx) => (
-                       <div key={idx} className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col sm:flex-row gap-4 items-start">
-                          <div className="bg-slate-900 text-white px-3 py-2 rounded-lg font-mono font-bold text-sm text-center min-w-[60px]">
-                             {pkg.code}
-                          </div>
-                          <div className="flex-1">
-                             <h4 className="font-bold text-slate-800">{pkg.type}</h4>
-                             <p className="text-xs text-slate-500 mt-1 mb-2">{pkg.desc}</p>
-                             <span className="inline-block bg-green-50 text-green-700 text-[10px] font-bold px-2 py-1 rounded border border-green-100">
-                                {pkg.suitability}
-                             </span>
-                          </div>
-                       </div>
-                    ))}
-                 </div>
-              </div>
-           )}
-
-           {/* TAB: IMP CODES */}
-           {activeTab === 'IMP' && (
-              <div className="space-y-3">
-                 {filterData(IMP_CODES, ['code', 'title']).map((imp, idx) => (
-                    <div key={idx} className="flex items-center gap-4 bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
-                       <div className="bg-slate-100 text-slate-600 px-3 py-2 rounded-lg font-black text-sm tracking-widest min-w-[60px] text-center border border-slate-200">
-                          {imp.code}
-                       </div>
-                       <div>
-                          <h4 className="font-bold text-slate-800 text-sm">{imp.title}</h4>
-                          <p className="text-xs text-slate-500">{imp.desc}</p>
-                          <p className="text-[10px] text-slate-400 mt-1 italic">{imp.context}</p>
-                       </div>
-                    </div>
-                 ))}
-              </div>
-           )}
-
-           {/* TAB: CHECKLIST */}
-           {activeTab === 'CHK' && (
-              <div className="space-y-3">
-                 <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm mb-4">
-                    <h3 className="text-sm font-black text-slate-400 uppercase tracking-widest mb-4">Pontos Críticos de Aceitação</h3>
-                    <div className="space-y-3">
-                       {CHECKLIST_ITEMS.map((item, idx) => (
-                          <div key={idx} className="flex items-start gap-3">
-                             <div className={`mt-0.5 w-5 h-5 rounded-md flex items-center justify-center shrink-0 ${item.mandated ? 'bg-red-50 text-red-500' : 'bg-slate-100 text-slate-400'}`}>
-                                <CheckSquare size={14} />
+           {/* GLOBAL SEARCH RESULTS VIEW */}
+           {search ? (
+              <div className="space-y-8 animate-in fade-in slide-in-from-bottom-2">
+                {(() => {
+                   let hasAnyResults = false;
+                   return (
+                     <>
+                        {ALL_SECTIONS.map((section) => {
+                           const results = filterData(section.data, section.keys);
+                           if (results.length === 0) return null;
+                           hasAnyResults = true;
+                           
+                           return (
+                             <div key={section.id} className="space-y-3">
+                                <div className="flex items-center gap-2 pb-2 border-b border-slate-200">
+                                   <section.icon size={16} className="text-coral-500" />
+                                   <h3 className="text-sm font-black text-indigo-900 uppercase tracking-wide">{section.label}</h3>
+                                   <span className="bg-slate-100 text-slate-500 text-[10px] font-bold px-1.5 py-0.5 rounded-md">{results.length}</span>
+                                </div>
+                                {section.render(results)}
                              </div>
-                             <div>
-                                <h4 className="text-xs font-bold text-slate-800">
-                                   {item.title}
-                                   {item.mandated && <span className="ml-2 text-[9px] text-red-500 font-black uppercase bg-red-50 px-1.5 py-0.5 rounded">Mandatório</span>}
-                                </h4>
-                                <p className="text-[10px] text-slate-500 mt-0.5">{item.desc}</p>
-                             </div>
-                          </div>
-                       ))}
-                    </div>
-                 </div>
-              </div>
-           )}
+                           );
+                        })}
 
-           {/* TAB: SEÇÕES DGR */}
-           {activeTab === 'DGR' && (
-              <div className="space-y-3">
-                 {filterData(DGR_SECTIONS_DATA, ['section', 'title', 'desc']).map((dgr, idx) => (
-                    <div key={idx} className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col sm:flex-row gap-4 items-start hover:border-indigo-300 transition-colors group">
-                       <div className="shrink-0 flex flex-col items-center gap-1 min-w-[80px]">
-                           <div className="bg-indigo-600 text-white px-2 py-1.5 rounded-lg font-black text-xs text-center w-full shadow-sm">
-                              {dgr.section}
+                        {!hasAnyResults && (
+                           <div className="text-center py-12">
+                              <div className="bg-slate-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                                 <Search className="text-slate-400" />
+                              </div>
+                              <h3 className="text-slate-600 font-bold">Nenhum resultado encontrado</h3>
+                              <p className="text-xs text-slate-400 mt-1">Tente buscar por código (ex: A154) ou termo chave.</p>
                            </div>
-                           <span className="text-[9px] font-bold text-indigo-400 uppercase tracking-wide">
-                              {dgr.topic}
-                           </span>
+                        )}
+                     </>
+                   );
+                })()}
+              </div>
+           ) : (
+              /* TABBED VIEW (Single Category) */
+              <>
+                 {activeTab === 'SP' && renderSP(SPECIAL_PROVISIONS_DATA)}
+                 {activeTab === 'GLOSSARY' && renderGlossary(BATTERY_GLOSSARY)}
+                 {activeTab === 'PKG' && (
+                    <div className="space-y-4">
+                       <div className="bg-indigo-50 p-4 rounded-xl border border-indigo-100 flex gap-3">
+                          <Box className="text-indigo-600 shrink-0" />
+                          <div>
+                             <h4 className="font-bold text-indigo-900 text-sm">Códigos de Embalagem UN</h4>
+                             <p className="text-xs text-indigo-800 mt-1">Estrutura: [Tipo][Material][Categoria]. Ex: 4G = Caixa (4) de Papelão (G).</p>
+                          </div>
                        </div>
-                       <div className="flex-1">
-                          <h4 className="font-bold text-slate-800 text-sm group-hover:text-indigo-700 transition-colors">{dgr.title}</h4>
-                          <p className="text-xs text-slate-600 mt-1 leading-relaxed">{dgr.desc}</p>
+                       {renderPackaging(PACKAGING_CODES)}
+                    </div>
+                 )}
+                 {activeTab === 'IMP' && renderIMP(IMP_CODES)}
+                 {activeTab === 'CHK' && (
+                    <div className="space-y-3">
+                       <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm mb-4">
+                          <h3 className="text-sm font-black text-slate-400 uppercase tracking-widest mb-4">Pontos Críticos de Aceitação</h3>
+                          {renderChecklist(CHECKLIST_ITEMS)}
                        </div>
                     </div>
-                 ))}
-              </div>
-           )}
-
-           {/* Empty State */}
-           {search && document.querySelectorAll('.bg-white').length === 0 && ( // Simple empty check visualization
-              <div className="text-center py-12">
-                 <div className="bg-slate-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <Search className="text-slate-400" />
-                 </div>
-                 <h3 className="text-slate-600 font-bold">Nenhum resultado encontrado</h3>
-                 <p className="text-xs text-slate-400 mt-1">Tente buscar por código (ex: A154) ou termo chave.</p>
-              </div>
+                 )}
+                 {activeTab === 'DGR' && renderDGRGrouped()}
+              </>
            )}
 
         </div>
