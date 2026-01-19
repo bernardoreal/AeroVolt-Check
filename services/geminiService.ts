@@ -1,7 +1,8 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import { BatterySpecs, CalculationResult, BatteryType, Configuration } from "../types";
 
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY || '' });
+// Always use const ai = new GoogleGenAI({apiKey: process.env.API_KEY}); as per guidelines.
+const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
 export const askRegulatoryAdvisor = async (
   question: string,
@@ -77,7 +78,7 @@ export const resolveDevicePreset = async (deviceName: string): Promise<any> => {
         - Pilhas botão ou não-recarregáveis de alta duração = LI_METAL.
         - Brinquedos simples ou ferramentas antigas = NI_MH.
         
-        REGRAS DE CONFIG:
+        REGRAS DE TIPO DE CONFIG:
         - Power Bank = STANDALONE.
         - Pilha avulsa = STANDALONE.
         - Eletrônico pronto = CONTAINED_IN.`,

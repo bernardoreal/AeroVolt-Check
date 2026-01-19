@@ -1,7 +1,6 @@
-
 import React, { useState, useEffect } from 'react';
 import { Battery, Zap, Settings, Plane, LayoutGrid, LayoutList, Smartphone, Laptop, Disc, AlertCircle, Info, Layers, Package, Grid3X3, Box, Check, X, Watch, Key, HeartPulse, CreditCard, BatteryMedium, Plug, Radio, Search, Sparkles, Loader2, ShieldOff, Thermometer } from 'lucide-react';
-import { BatteryType, Configuration, BatterySpecs, CalculationResult } from './types';
+import { BatteryType, Configuration, BatterySpecs, CalculationResult, Language } from './types';
 import { calculateCompliance } from './utils/iataCalculator';
 import ComplianceResult from './components/ComplianceResult';
 import RegulatoryAdvisor from './components/RegulatoryAdvisor';
@@ -12,6 +11,7 @@ export function App() {
   const [activePreset, setActivePreset] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearching, setIsSearching] = useState(false);
+  const [language, setLanguage] = useState<Language>('pt');
 
   // Busca desabilitada temporariamente
   const isDeployActive = false;
@@ -60,7 +60,6 @@ export function App() {
   };
 
   const handleAISearch = async () => {
-    // Bloqueia execução se não houver deploy ou busca em andamento
     if (!isDeployActive || !searchQuery.trim() || isSearching) return;
     
     setIsSearching(true);
@@ -178,7 +177,7 @@ export function App() {
         setConfig(Configuration.CONTAINED_IN);
         setStructure('cell');
         setVoltage('3.0');
-        setCapacity('1000'); // Typical Coin Cell or AA Lithium
+        setCapacity('1000');
         setCapacityUnit('mAh');
         setPackageCount('1');
         setUnitsPerPackage('1');
@@ -343,10 +342,7 @@ export function App() {
       <div className="absolute -top-24 -right-24 w-96 h-96 bg-coral-400/10 rounded-full blur-3xl pointer-events-none z-0"></div>
       <div className="absolute top-1/2 -left-24 w-72 h-72 bg-indigo-500/5 rounded-full blur-3xl pointer-events-none z-0"></div>
 
-      {/* Header Updated with "Linda Gradient" between Indigo and Coral tones */}
       <header className="relative bg-gradient-to-br from-indigo-900 via-indigo-800 to-coral-900 text-white pt-6 pb-20 px-4 md:px-8 border-b-4 border-coral-500 z-30 print:hidden shrink-0 overflow-hidden shadow-xl">
-        
-        {/* Decorative ambient glow inside header for the gradient effect */}
         <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-coral-500/20 rounded-full blur-[100px] -translate-y-1/2 translate-x-1/3 pointer-events-none mix-blend-screen"></div>
         <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-indigo-500/20 rounded-full blur-[100px] translate-y-1/2 -translate-x-1/4 pointer-events-none mix-blend-screen"></div>
 
@@ -389,112 +385,64 @@ export function App() {
           <div className="print:hidden h-fit">
             <div className="bg-white rounded-[2.5rem] shadow-2xl p-6 md:p-8 border-2 border-slate-100 flex flex-col gap-8 transition-all hover:shadow-indigo-500/10">
               
-              <div className="shrink-0">
-                 <div className="flex items-center justify-between mb-3 px-1">
-                    <div className="flex items-center gap-2">
-                      <div className="w-1.5 h-4 bg-coral-500 rounded-full"></div>
-                      <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Acesso Rápido</p>
-                    </div>
-                 </div>
-
-                 {/* Campo de Busca Inteligente com IA - REFORÇO NO BLOQUEIO */}
-                 <div className="mb-6 relative group">
-                    <div className={`absolute left-4 top-1/2 -translate-y-1/2 transition-colors pointer-events-none ${!isDeployActive ? 'text-slate-300' : 'text-slate-400 group-focus-within:text-coral-500'}`}>
-                      {isSearching ? <Loader2 size={18} className="animate-spin" /> : (!isDeployActive ? <ShieldOff size={18} /> : <Search size={18} />)}
-                    </div>
-                    <input 
-                      type="text" 
-                      placeholder={isDeployActive ? "Buscar dispositivo (ex: Ventilador Médico)..." : "Busca IA Desabilitada (Aguardando Deploy)"}
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter' && isDeployActive) {
-                          handleAISearch();
-                        }
-                      }}
-                      disabled={!isDeployActive || isSearching}
-                      className={`w-full border-2 rounded-2xl py-3.5 pl-11 pr-12 text-sm font-bold focus:outline-none transition-all shadow-inner ${
-                        isDeployActive 
-                        ? 'bg-slate-50 border-slate-100 focus:bg-white focus:border-coral-500 placeholder:text-slate-400 cursor-text' 
-                        : 'bg-slate-100 border-slate-200 text-slate-300 placeholder:text-slate-300 cursor-not-allowed select-none opacity-60'
-                      }`}
-                    />
-                    <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                       <div className={`p-1.5 rounded-xl shadow-lg transition-colors ${isDeployActive ? 'bg-indigo-600 text-white shadow-indigo-200' : 'bg-slate-300 text-slate-400 shadow-none'}`}>
-                          <Sparkles size={14} className={isSearching && isDeployActive ? 'animate-pulse' : ''} />
-                       </div>
-                    </div>
-                 </div>
-
-                 <div className={`grid gap-3 md:gap-4 ${isSingleColumn ? 'grid-cols-2 sm:grid-cols-4' : 'grid-cols-2'}`}>
-                    {currentPresets.map((preset) => {
-                       const isActive = activePreset === preset.id;
-                       const Icon = preset.icon;
-                       return (
-                         <button 
-                           key={preset.id} 
-                           onClick={() => applyPreset(preset.id)} 
-                           className={`
-                             relative group flex flex-col items-center justify-center gap-3 py-4 px-2 rounded-[1.75rem] border-2 transition-all duration-300 outline-none active:scale-95 min-h-[120px] w-full
-                             ${isActive 
-                               ? 'bg-indigo-600 border-indigo-600 shadow-[0_8px_25px_-6px_rgba(44,4,140,0.4)] z-10' 
-                               : 'bg-white border-slate-100 hover:border-coral-400 hover:shadow-lg hover:shadow-coral-500/10'
-                             }
-                           `}
-                         >
-                           <div className={`
-                             w-12 h-12 rounded-2xl transition-all duration-300 flex items-center justify-center
-                             ${isActive 
-                               ? 'bg-white text-indigo-700 shadow-inner' 
-                               : 'bg-indigo-50 text-indigo-400 group-hover:bg-coral-50 group-hover:text-coral-600'
-                             }
-                           `}>
-                              <Icon 
-                                size={24} 
-                                strokeWidth={2}
-                                className="transition-transform duration-300 group-hover:scale-110" 
-                              />
-                           </div>
-                           
-                           <span className={`text-[10px] font-black uppercase tracking-widest leading-tight text-center block w-full px-1 truncate transition-colors ${isActive ? 'text-white' : 'text-slate-400 group-hover:text-indigo-900'}`}>
-                              {preset.label}
-                           </span>
-
-                           {isActive && (
-                             <div className="absolute top-2 right-2 bg-coral-500 text-white w-5 h-5 rounded-full flex items-center justify-center border-[2.5px] border-indigo-600 shadow-md animate-in zoom-in">
-                                <Check size={10} strokeWidth={4} />
-                             </div>
-                           )}
-                         </button>
-                       )
-                    })}
-                 </div>
-              </div>
-
               <div className="space-y-6">
+                
+                {/* SELECTOR DE QUÍMICA (LI-ION vs LI-METAL) */}
                 <div>
-                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 block px-1">Tipo de Bateria</label>
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                    {[BatteryType.LI_ION, BatteryType.LI_METAL, BatteryType.NI_MH].map(type => (
-                      <button
-                        key={type}
-                        onClick={() => handleManualChange(setBatteryType, type)}
-                        className={`py-3 px-2 rounded-2xl border-2 transition-all flex flex-col items-center justify-center gap-2 ${
-                          batteryType === type ? 'border-indigo-500 bg-indigo-50/40 shadow-sm' : 'border-slate-100 bg-slate-50 text-slate-400 hover:border-slate-200'
-                        }`}
-                      >
-                        {type === BatteryType.LI_ION && <Battery size={18} className={batteryType === type ? 'text-indigo-500' : ''}/>}
-                        {type === BatteryType.LI_METAL && <Zap size={18} className={batteryType === type ? 'text-indigo-500' : ''}/>}
-                        {type === BatteryType.NI_MH && <BatteryMedium size={18} className={batteryType === type ? 'text-indigo-500' : ''}/>}
-                        
-                        <span className={`font-black text-[9px] uppercase tracking-tight leading-none text-center ${batteryType === type ? 'text-indigo-900' : ''}`}>
-                            {type === BatteryType.NI_MH ? 'Ni-MH' : type.split(' (')[0]}
-                        </span>
-                      </button>
-                    ))}
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 block px-1">
+                    Química da Bateria
+                  </label>
+                  
+                  {/* Primary Toggle Group */}
+                  <div className="flex bg-slate-100 p-1.5 rounded-2xl gap-2 shadow-inner border border-slate-200">
+                    <button
+                      onClick={() => handleManualChange(setBatteryType, BatteryType.LI_ION)}
+                      className={`flex-1 py-3 px-2 rounded-xl flex items-center justify-center gap-2 transition-all duration-300 ${
+                        batteryType === BatteryType.LI_ION 
+                        ? 'bg-white shadow-md text-indigo-900 border border-indigo-100 ring-2 ring-indigo-50' 
+                        : 'text-slate-400 hover:bg-slate-200 hover:text-slate-600'
+                      }`}
+                    >
+                      <Battery size={20} className={batteryType === BatteryType.LI_ION ? 'text-indigo-600 fill-indigo-100' : ''} />
+                      <div className="text-left leading-none">
+                        <span className="block text-[11px] font-black uppercase tracking-tight">Íon-Lítio</span>
+                        <span className="block text-[9px] font-bold opacity-60">Recarregável</span>
+                      </div>
+                    </button>
+
+                    <button
+                      onClick={() => handleManualChange(setBatteryType, BatteryType.LI_METAL)}
+                      className={`flex-1 py-3 px-2 rounded-xl flex items-center justify-center gap-2 transition-all duration-300 ${
+                        batteryType === BatteryType.LI_METAL 
+                        ? 'bg-white shadow-md text-indigo-900 border border-indigo-100 ring-2 ring-indigo-50' 
+                        : 'text-slate-400 hover:bg-slate-200 hover:text-slate-600'
+                      }`}
+                    >
+                      <Zap size={20} className={batteryType === BatteryType.LI_METAL ? 'text-indigo-600 fill-indigo-100' : ''} />
+                      <div className="text-left leading-none">
+                        <span className="block text-[11px] font-black uppercase tracking-tight">Metal Lítio</span>
+                        <span className="block text-[9px] font-bold opacity-60">Não Recarregável</span>
+                      </div>
+                    </button>
+                  </div>
+
+                  {/* Secondary Option: Ni-MH */}
+                  <div className="mt-2 flex justify-end">
+                    <button 
+                      onClick={() => handleManualChange(setBatteryType, BatteryType.NI_MH)}
+                      className={`text-[9px] font-bold px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1.5 ${
+                        batteryType === BatteryType.NI_MH 
+                        ? 'bg-indigo-50 text-indigo-700 ring-1 ring-indigo-200' 
+                        : 'text-slate-400 hover:bg-slate-100 hover:text-slate-600'
+                      }`}
+                    >
+                      <BatteryMedium size={12} />
+                      <span>Alternativa: Níquel-Hidreto (Ni-MH)</span>
+                    </button>
                   </div>
                 </div>
 
+                {/* Configuration Grid */}
                 <div>
                   <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 block px-1">Configuração</label>
                   <div className="grid grid-cols-1 gap-2.5">
@@ -789,7 +737,7 @@ export function App() {
       </footer>
 
       {result && <RegulatoryAdvisor specs={getSpecs()} result={result} />}
-      <SpecialProvisionsDictionary />
+      <SpecialProvisionsDictionary language={language} />
       
       <style>{`
         html, body {
