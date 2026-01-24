@@ -741,11 +741,16 @@ export function App() {
                     
                     {result ? (
                       <div className="relative z-10">
-                        <div className="flex items-baseline gap-2">
+                        <div className="flex items-baseline gap-2 flex-wrap">
                           <span className="text-4xl font-black tracking-tighter text-white">
-                            {result.energy.toFixed(1)}
+                            {result.energy.toFixed(2)}
                           </span>
                           <span className="text-xs font-black text-indigo-300 uppercase">{result.unit}</span>
+                          {batteryType === BatteryType.LI_METAL && (
+                            <span className="text-[10px] font-black text-coral-300 uppercase ml-1">
+                              ({(result.energy / 1000).toFixed(2)} kg)
+                            </span>
+                          )}
                         </div>
                         <div className={`mt-3 inline-block px-3 py-1 rounded-xl font-black text-[9px] uppercase tracking-widest shadow-lg ${
                           result.alertColor === 'red' ? 'bg-red-600 text-white' : 'bg-coral-500 text-white'
