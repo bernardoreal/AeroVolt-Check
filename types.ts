@@ -20,8 +20,8 @@ export enum ComplianceStatus {
 
 export type AirlineCode = 'L7' | 'FX' | 'EK' | 'IATA';
 
-// Add Language type for i18n support in Dictionary and Wiki
-export type Language = 'pt' | 'en' | 'es';
+// Restrito apenas ao Português conforme solicitação
+export type Language = 'pt';
 
 export interface BatterySpecs {
   airline: AirlineCode;
