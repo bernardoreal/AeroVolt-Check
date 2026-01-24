@@ -2,7 +2,7 @@ import { GoogleGenAI, Type } from "@google/genai";
 import { BatterySpecs, CalculationResult, BatteryType, Configuration } from "../types";
 
 // Always use const ai = new GoogleGenAI({apiKey: process.env.API_KEY}); as per guidelines.
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+//const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
 export const askRegulatoryAdvisor = async (
   question: string,

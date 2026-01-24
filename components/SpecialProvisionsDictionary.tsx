@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import Fuse from 'fuse.js';
 import { 
@@ -8,6 +7,7 @@ import {
   Thermometer, Zap, ClipboardList, LifeBuoy, Shield, Ban, Hand, Warehouse,
   Anchor, Truck, AlertTriangle, Droplets, BatteryCharging, Factory, Recycle,
   Gavel, FileWarning, HelpCircle,
+  // Fix: Added missing icon imports used in the component
   CheckCircle2, ArrowRight
 } from 'lucide-react';
 import { Language } from '../types';
@@ -17,23 +17,26 @@ import { Language } from '../types';
 const getGlossary = (lang: Language) => {
   const data = {
     pt: [
-      { term: 'Ampère-hora (Ah)', def: 'Unidade de medida de carga elétrica que representa a transferência de um Ampère por uma hora (3.600 Coulombs). No transporte de baterias, é o dado fundamental para converter a capacidade nominal para Watts-hora (Wh) ou calcular o Teor de Lítio em gramas.', context: 'DGR 3.9.2.6(a): A capacidade nominal em Ah multiplicada pela tensão nominal em Volts resulta na energia em Wh. Essencial para classificação nas Seções I, IA, IB ou II.' },
-      { term: 'Bateria (Battery)', def: 'Duas ou mais células conectadas eletricamente entre si e equipadas com dispositivos necessários para uso (ex: terminais, carcaça e marcações). Nota: Baterias unitárias de célula única são legalmente tratadas como "células".', context: 'DGR Seção 3: Power Banks e dispositivos portáteis de recarga são classificados como baterias (UN 3480) sob a Instrução de Embalagem 965.' },
-      { term: 'Célula (Cell)', def: 'Uma unidade eletroquímica única e encapsulada que possui um eletrodo positivo e um negativo e exibe uma diferença de potencial elétrico entre seus terminais.', context: 'IATA PI 965-970: Células possuem limites de energia menores (20 Wh para Íon-Lítio / 1g para Metal Lítio) para fins de isenção ou simplificação regulatória.' },
-      { term: 'Curto-Circuito', def: 'Um caminho acidental de baixa resistência entre os terminais de uma bateria ou célula, resultando em fluxo excessivo de corrente, geração rápida de calor e potencial ignição.', context: 'IATA 5.0.2.4: A prevenção física contra curto-circuitos (isolamento de terminais com fita, capas plásticas ou blisters individuais) é requisito absoluto para aceitação.' },
-      { term: 'DGD (Shippers Decl.)', def: 'Dangerous Goods Declaration. Documento legal assinado pelo expedidor atestando que a mercadoria está devidamente classificada, descrita, embalada, marcada e etiquetada.', context: 'DGR 8.1: Obrigatória para Seções IA e IB. Deve possuir as margens laterais hachuradas em vermelho e ser preenchida obrigatoriamente em inglês.' },
-      { term: 'Estado de Carga (SoC)', def: 'State of Charge. A quantidade de energia elétrica disponível em uma bateria em relação à sua capacidade nominal máxima, expressa em percentagem.', context: 'SP A331: Baterias de íon-lítio (UN 3480) não podem exceder 30% de SoC no momento do embarque. Exceções requerem aprovação estatal do Estado de Origem.' },
-      { term: 'Fuga Térmica', def: 'Thermal Runaway. Um fenômeno químico onde a temperatura interna de uma célula aumenta rapidamente a ponto de causar fogo, explosão e liberação de gases tóxicos inflamáveis.', context: 'DGR App F: O fogo de lítio é uma classe de incêndio complexa que requer resfriamento intenso. Extintores Halon ou CO2 podem apagar chamas superficiais, mas não interrompem a reação química interna.' },
-      { term: 'Manual de Testes (ONU)', def: 'Manual de Testes e Critérios da ONU, Parte III, Subseção 38.3. Define o protocolo de segurança global para o design de baterias de lítio.', context: 'UN 38.3: Inclui testes de altitude (T1), térmico (T2), vibração (T3), choque (T4), curto-externo (T5), impacto/esmagamento (T6), sobrecarga (T7) e descarga forçada (T8).' },
-      { term: 'Watt-hora (Wh)', def: 'Unidade de energia nominal. O IATA DGR utiliza Watts-hora como o critério primário para determinar o risco e a instrução de embalagem de baterias de íon-lítio.', context: 'DGR 3.9.2.6.1: Wh = Voltagem Nominal (V) × Capacidade Nominal (Ah).' },
-      { term: 'Sobreembalagem (Overpack)', def: 'Um invólucro usado por um único expedidor para conter um ou mais volumes e formar uma unidade de manuseio consolidada.', context: 'DGR 5.0.1.5: Volumes regulados dentro de um overpack devem ter suas etiquetas e marcas reproduzidas externamente, além da marca "OVERPACK" em caracteres de no mínimo 12mm.' },
+      { term: 'Ampère-hora (Ah)', def: 'Unidade de medida de carga elétrica que representa a transferência de um Ampère por uma hora. No DGR, é a base para o cálculo de Watts-hora (Wh) e Teor de Lítio.', context: 'Fórmula DGR: Ah = mAh / 1000. Essencial para classificar a energia nominal de células e baterias.' },
+      { term: 'Bateria (Battery)', def: 'Duas ou mais células conectadas eletricamente entre si e equipadas com dispositivos necessários para uso (ex: terminais, carcaça e marcações). Para fins de DGR, "bateria" inclui conjuntos montados.', context: 'Nota de Auditoria: Power Banks são legalmente definidos como baterias soltas (UN 3480) sob a PI 965.' },
+      { term: 'Célula (Cell)', def: 'Unidade eletroquímica única e encapsulada (um eletrodo positivo e um negativo) que exibe uma voltagem diferencial entre seus dois terminais.', context: 'Diferenciação Crítica: O DGR estabelece limites de energia inferiores para células (20Wh) em comparação com baterias (100Wh) na Seção II.' },
+      { term: 'Curto-Circuito', def: 'Conexão acidental de baixa resistência entre os terminais positivo e negativo de uma bateria, resultando em fluxo excessivo de corrente e evolução perigosa de calor.', context: 'IATA 5.0.2.4: A prevenção de curto-circuitos através de isolamento físico (capas, fita ou embalagem individual) é mandatória.' },
+      { term: 'DGD (Shippers Decl.)', def: 'Dangerous Goods Declaration. Documento legal e oficial onde o expedidor declara que a carga cumpre todas as disposições do IATA DGR.', context: 'DGR 8.1: Obrigatória para Seção IA e IB. Deve possuir bordas vermelhas hachuradas e ser assinada por pessoal certificado.' },
+      { term: 'Estado de Carga (SoC)', def: 'State of Charge. A porcentagem de energia disponível em uma bateria em relação à sua capacidade nominal total.', context: 'SP A331: Baterias UN 3480 soltas não podem exceder 30% de SoC no momento do embarque aéreo.' },
+      { term: 'Fuga Térmica', def: 'Thermal Runaway. Reação química exotérmica em cadeia onde o calor gerado internamente acelera a reação, resultando em fogo violento e emissão de gases tóxicos.', context: 'Risco Sistêmico: É o principal perigo que justifica a proibição de baterias danificadas (A154) e as restrições de embalagem UN Spec.' },
+      { term: 'Manual de Testes (ONU)', def: 'Manual de Testes e Critérios da ONU, Parte III, Subseção 38.3. Define o protocolo global de certificação de segurança para baterias de lítio.', context: 'Certificação UN 38.3: Inclui testes de altitude, térmicos, vibração, choque, curto-externo, impacto, sobrecarga e descarga forçada.' },
+      { term: 'Watt-hora (Wh)', def: 'Unidade de energia nominal. IATA DGR 3.9.2.6 define Wh como a medida primária para classificar o risco de baterias de íon-lítio.', context: 'Cálculo Oficial: Watts-hora (Wh) = Tensão Nominal (V) × Capacidade Nominal (Ah).' },
+      { term: 'Sobreembalagem (Overpack)', def: 'Invólucro usado por um único expedidor para conter um ou mais volumes e formar uma unidade de manuseio consolidada para fins de conveniência.', context: 'Marcação DGR 5.0.1.5: Se as marcas internas não forem visíveis, deve-se aplicar a marca "OVERPACK" (min 12mm) e reproduzir as etiquetas.' },
     ],
     en: [
-      { term: 'Ampere-hour (Ah)', def: 'A unit of electric charge, equal to the charge transferred by a steady current of one ampere for one hour.', context: 'Used to calculate Watt-hours (Wh) for battery classification per DGR 3.9.2.6.' },
-      { term: 'Thermal Runaway', def: 'A chain reaction in a battery where an increase in temperature causes a further increase in temperature, leading to fire or explosion.', context: 'The primary risk associated with Lithium battery transport.' }
+      { term: 'Ampere-hour (Ah)', def: 'Unit of electric charge. Base for calculating Watt-hours (Wh) and Lithium Content per DGR 3.9.2.6.', context: 'DGR Formula: Ah = mAh / 1000.' },
+      { term: 'Battery', def: 'Two or more cells electrically connected and fitted with devices necessary for use. Includes battery packs.', context: 'Audit Note: Power Banks are legally batteries (UN 3480).' },
+      { term: 'Cell', def: 'A single encased electrochemical unit with one positive and one negative electrode.', context: 'Critical Note: Cells have lower energy limits (20Wh) than batteries (100Wh) in Section II.' },
+      { term: 'State of Charge (SoC)', def: 'The available capacity in a battery expressed as a percentage of its rated capacity.', context: 'SP A331: UN 3480 batteries must not exceed 30% SoC for air transport.' },
     ],
     es: [
-      { term: 'Vatios-hora (Wh)', def: 'Unidad de energía nominal. Criterio primario para clasificar baterías de ion-litio.', context: 'Wh = Voltios (V) x Amperios-hora (Ah).' }
+      { term: 'Vatios-hora (Wh)', def: 'Unidad de energía nominal. Criterio primario para clasificar baterías de ion-litio.', context: 'Cálculo: Wh = Voltios (V) x Amperios-hora (Ah).' },
+      { term: 'Batería', def: 'Dos o más celdas conectadas eléctricamente y equipadas con los dispositivos necesarios para su uso.', context: 'Nota: Los Power Banks se clasifican como UN 3480.' },
     ]
   };
   return data[lang];
@@ -42,17 +45,18 @@ const getGlossary = (lang: Language) => {
 const getPackaging = (lang: Language) => {
   const data = {
     pt: [
-      { code: 'UN 4G / PG II', type: 'Caixa de Fibra (Fibreboard Box)', desc: 'Embalagem de especificação UN testada para suportar riscos médios (Y). Deve possuir marcação permanente do fabricante.', suitability: 'Obrigatório para Seções IA e IB. Deve suportar quedas, pressão interna e empilhamento certificado.' },
-      { code: 'Strong Rigid', type: 'Embalagem Rígida e Forte', desc: 'Embalagem externa comercial que, embora não homologada UN, possui integridade estrutural para proteger o conteúdo durante o manuseio normal.', suitability: 'Permitido apenas para Seção II. Não pode ser envelope, caixa de papel pardo fino ou sacos plásticos.' },
-      { code: 'Inner Pkg', type: 'Embalagem Interna (Primária)', desc: 'Invólucros que circundam individualmente cada bateria ou célula para evitar contato físico entre elas.', suitability: 'MANDATÓRIO em todos os envios. Deve ser não condutor e capaz de conter vazamentos em pequena escala.' },
-      { code: '95 kPa', type: 'Diferencial de Pressão', desc: 'Capacidade da embalagem ou receptáculo de resistir a uma queda de pressão atmosférica de 95 kPa sem vazamento de fluidos.', suitability: 'Requisito mandatório para baterias de eletrólito líquido (Baterias Úmidas) conforme DGR 5.0.2.9.' },
-      { code: 'Dunnage', type: 'Material de Calço/Amortecimento', desc: 'Materiais inertes usados para preencher vazios, imobilizar a carga e absorver choques mecânicos.', suitability: 'Obrigatório para garantir que as baterias não se movam dentro do volume, prevenindo danos à carcaça e ativação de dispositivos.' },
+      { code: 'UN 4G/Y', type: 'Caixa de Fibra Homologada', desc: 'Embalagem de especificação UN testada para desempenho do Grupo de Embalagem II (Médio Risco).', suitability: 'Mandatório para Seções IA e IB. Requer marcação permanente do fabricante.' },
+      { code: 'Strong Rigid', type: 'Embalagem Rígida e Forte', desc: 'Embalagem comercial de alta qualidade capaz de resistir a vibrações e ao drop test de 1,2m sem falha.', suitability: 'Permitido apenas para Seção II. Não pode ser envelope ou saco plástico.' },
+      { code: 'Inner Pkg', type: 'Embalagem Interna Primária', desc: 'Sacos plásticos, blisters ou divisórias que isolam fisicamente cada bateria/célula.', suitability: 'MANDATÓRIO em todos os envios para prevenir curto-circuito e movimento interno.' },
+      { code: '95 kPa', type: 'Diferencial de Pressão', desc: 'Capacidade estrutural da embalagem de conter vazamentos sob variação de pressão atmosférica em altitude.', suitability: 'Mandatório para artigos contendo eletrólito líquido (Baterias Úmidas).' },
+      { code: 'Absorvente', type: 'Material de Amortecimento', desc: 'Material inerte não condutor que preenche espaços vazios e protege contra impactos mecânicos.', suitability: 'Requisito para evitar quebra de terminais ou carcaça durante turbulência.' },
     ],
     en: [
-      { code: 'UN 4G', type: 'UN Spec Fibreboard Box', desc: 'Tested packaging compliant with Packing Group II standards.', suitability: 'Mandatory for Section IA and IB shipments.' }
+      { code: 'UN 4G/Y', type: 'UN Specification Fibreboard Box', desc: 'Lab-tested packaging for Packing Group II performance standards.', suitability: 'Mandatory for Sections IA and IB. Requires visible UN mark.' },
+      { code: 'Strong Rigid', type: 'Strong Rigid Outer Packaging', desc: 'Commercial packaging capable of withstanding 1.2m drop test.', suitability: 'Allowed only for Section II. Must be rigid (no envelopes).' },
     ],
     es: [
-      { code: 'UN 4G', type: 'Caja de Fibra homologada', desc: 'Embalaje probado para nivel de riesgo medio.', suitability: 'Obligatorio para Secciones IA y IB.' }
+      { code: 'UN 4G/Y', type: 'Caja de Fibra Homologada UN', desc: 'Embalaje probado para nivel de riesgo Grupo de Embalaje II.', suitability: 'Obligatorio para Secciones IA y IB.' },
     ]
   };
   return data[lang];
@@ -61,19 +65,20 @@ const getPackaging = (lang: Language) => {
 const getChecklist = (lang: Language) => {
   const data = {
     pt: [
-      { title: 'Auditoria de DGD (Seção 8.1)', desc: 'Verificar se o documento está em 3 vias, em inglês, sem rasuras, assinado por pessoal certificado e com telefone de emergência 24h.', mandated: true },
-      { title: 'Test Summary (UN 38.3)', desc: 'Confirmar a existência do Resumo de Teste físico (ou digital validado). A LATAM exige apresentação no aceite conforme L7-04.', mandated: true },
-      { title: 'Marca de Lítio (Desenho 7.1.5.5)', desc: 'Borda hachurada vermelha, dimensões min. 100x100mm, contendo o UN Number e telefone de contato.', mandated: true },
-      { title: 'Etiqueta Classe 9A (Risco)', desc: 'Etiqueta de perigo específica para baterias de lítio com símbolo de baterias em chama na metade inferior.', mandated: true },
-      { title: 'Etiqueta CAO (Cargo Aircraft Only)', desc: 'Obrigatória para UN 3480 e UN 3090. Dimensões 120x110mm, cor laranja com símbolo de aeronave.', mandated: true },
-      { title: 'Declaração de SoC no AWB', desc: 'Para UN 3480, verificar a frase: "Lithium ion batteries in compliance with Section XX of PI 965. State of Charge not exceeding 30%".', mandated: true },
-      { title: 'Integridade dos Volumes', desc: 'Inspeção física: volumes sem furos, sinais de esmagamento, manchas de umidade ou terminais expostos.', mandated: true },
+      { title: 'Verificação DGD (8.1)', desc: 'Documento em 3 vias, inglês/português, sem rasuras, assinado e com telefone 24h.', mandated: true },
+      { title: 'Resumo de Teste (UN 38.3)', desc: 'Confirmação de que o modelo de bateria passou nos 8 testes de segurança (L7-04 exige físico).', mandated: true },
+      { title: 'Marca de Bateria de Lítio', desc: 'Borda hachurada vermelha (100x100mm) com UN Number e telefone de contato.', mandated: true },
+      { title: 'Etiqueta Classe 9A (Risco)', desc: 'Símbolo de perigo específico para baterias de lítio na metade inferior da etiqueta.', mandated: true },
+      { title: 'Etiqueta CAO (120x110mm)', desc: 'Obrigatória para UN 3480 e UN 3090. Laranja vibrante com aeronave e texto Cargo Only.', mandated: true },
+      { title: 'Proteção de Terminais', desc: 'Inspeção física: baterias não podem estar soltas; terminais devem estar tapados/isolados.', mandated: true },
+      { title: 'Estado de Carga (AWB)', desc: 'Verificar menção "SoC not exceeding 30%" no conhecimento aéreo para UN 3480.', mandated: true },
     ],
     en: [
-      { title: 'DGD Verification', desc: '3 copies, English, signed, emergency phone included.', mandated: true }
+      { title: 'DGD Audit (8.1)', desc: '3 copies, English, no erasures, signed, 24h emergency phone included.', mandated: true },
+      { title: 'Lithium Battery Mark', desc: 'Red hatched border (100x100mm) with correct UN Number and phone.', mandated: true },
     ],
     es: [
-      { title: 'Verificación de DGD', desc: '3 copias, inglés, firmado, teléfono de emergencia.', mandated: true }
+      { title: 'Auditoría DGD (8.1)', desc: '3 copias, inglés, sin tachaduras, firmado, teléfono 24h incluido.', mandated: true },
     ]
   };
   return data[lang];
@@ -82,16 +87,16 @@ const getChecklist = (lang: Language) => {
 const getSegregation = (lang: Language) => {
   const data = {
     pt: [
-      { title: 'Explosivos (Classe 1)', rule: 'Tabela 9.3.A', desc: 'SEGREGAR MANDATORIAMENTE de todas as divisões (exceto 1.4S).', details: 'Baterias de lítio e explosivos são incompatíveis devido ao risco de ignição mútua e aceleração de detonação em caso de incêndio.' },
-      { title: 'Animais Vivos (AVI)', rule: 'DGR 9.3.2.2', desc: 'PROIBIDO carregar no mesmo compartimento se houver risco de fumaça tóxica.', details: 'O fogo de baterias de lítio libera Fluoreto de Hidrogênio (HF), um gás altamente corrosivo e letal para animais em baixas concentrações.' },
-      { title: 'Líquidos Inflamáveis (Classe 3)', rule: 'Recomendação de Estiva', desc: 'Segregar sempre que possível para reduzir a propagação térmica.', details: 'Embora a IATA não proíba estritamente (dependendo da Seção), o contato de baterias em fuga térmica com líquidos combustíveis cria um incêndio incontrolável.' },
-      { title: 'Fontes de Calor', rule: 'DGR 9.3.6', desc: 'Manter afastado de superfícies quentes da aeronave ou aquecedores.', details: 'Temperaturas elevadas podem degradar o separador das células, levando à instabilidade térmica espontânea.' },
+      { title: 'Explosivos (Classe 1)', rule: 'Tabela 9.3.A', desc: 'SEGREGAR MANDATORIAMENTE de todas as divisões (exceto 1.4S).', details: 'Baterias de lítio não podem ser estivadas adjacentes a explosivos devido ao risco de ignição por calor.' },
+      { title: 'AVI (Animais Vivos)', rule: 'DGR 9.3.2', desc: 'PROIBIDO carregar no mesmo compartimento se houver risco de fumaça tóxica.', details: 'Gases gerados em fogo de lítio (Fluoreto de Hidrogênio) causam morte asfíxica imediata em animais.' },
+      { title: 'Líquidos Inflamáveis (Cl 3)', rule: 'Recomendação', desc: 'SEGREGAR para reduzir a severidade em caso de fuga térmica.', details: 'O contato entre baterias em combustão e líquidos inflamáveis torna o fogo incontrolável pelos sistemas da aeronave.' },
+      { title: 'Cargas Inertes', rule: 'Prática de Segurança', desc: 'Separar baterias por pelo menos 1 metro de outras cargas inflamáveis.', details: 'O isolamento térmico por distância evita a propagação de calor entre pallets.' },
     ],
     en: [
-      { title: 'Class 1 (Explosives)', rule: 'Table 9.3.A', desc: 'Mandatory segregation from all divisions except 1.4S.', details: 'High risk of sympathetic detonation if a battery fire occurs.' }
+      { title: 'Class 1 (Explosives)', rule: 'Table 9.3.A', desc: 'MANDATORY SEGREGATION from all divisions (except 1.4S).', details: 'Lithium batteries must not be stowed adjacent to explosives.' },
     ],
     es: [
-      { title: 'Explosivos (Clase 1)', rule: 'Tabla 9.3.A', desc: 'Segregar obligatoriamente de todas las divisiones excepto 1.4S.', details: 'Incompatibilidad crítica de estiba.' }
+      { title: 'Explosivos (Clase 1)', rule: 'Tabla 9.3.A', desc: 'SEGREGAR de todas las divisiones (excepto 1.4S).', details: 'Baterías de litio no pueden estar junto a explosivos.' },
     ]
   };
   return data[lang];
@@ -100,26 +105,29 @@ const getSegregation = (lang: Language) => {
 const getDGRData = (lang: Language) => {
   const common = {
     pt: [
-      { section: '1.2.7', topic: 'Responsabilidades', title: 'Obrigações Legais do Expedidor', desc: 'Responsabilidade primária por toda a conformidade.', details: 'O expedidor é o responsável legal por garantir que os artigos perigosos não são proibidos e estão classificados, embalados, marcados, etiquetados e documentados de acordo com o DGR vigente.' },
-      { section: '1.3', topic: 'Capacitação', title: 'Treinamento Baseado em Competência (CBTA)', desc: 'Qualificação mandatória de pessoal.', details: 'Todo pessoal envolvido na oferta de baterias de lítio para transporte aéreo deve possuir treinamento verificado a cada 24 meses, seguindo o modelo CBTA da IATA.' },
-      { section: '1.6.1', topic: 'Capacitação', title: 'Instrução Adequada (Seção II)', desc: 'Exigência simplificada para expedidores casuais.', details: 'Expedidores de volumes da Seção II devem receber instrução sobre os riscos das baterias, métodos de proteção contra curtos e requisitos de documentação simplificada.' },
-      { section: '2.3', topic: 'Limitações', title: 'Artigos Perigosos com Passageiros', desc: 'Regras para bagagem de mão e despachada.', details: 'Baterias sobressalentes e Power Banks são PROIBIDOS na bagagem despachada. Devem estar na bagagem de mão, com terminais isolados e limites de 100Wh (ou 160Wh com aprovação).' },
-      { section: '2.4', topic: 'Limitações', title: 'Serviço de Correio Aéreo (UPU)', desc: 'Restrições para remessas postais internacionais.', details: 'Baterias de lítio soltas (UN 3480/3090) são estritamente proibidas em malas postais. Apenas baterias contidas em equipamentos (Seção II) podem ser aceitas com limites específicos.' },
-      { section: '2.8', topic: 'Limitações', title: 'Variações de Estado e Operador', desc: 'Regras mais restritivas de países e companhias.', details: 'As variações prevalecem sobre a regra geral IATA. Ex: Variação L7-01 da LATAM proíbe UN 3480 e UN 3090 em aeronaves de passageiros.' },
-      { section: '3.9.2.6', topic: 'Classificação', title: 'Critérios de Segurança (UN 38.3)', desc: 'Certificação de design obrigatória.', details: 'Toda célula ou bateria de lítio deve ter passado com sucesso nos testes do Manual ONU de Testes e Critérios, Parte III, subseção 38.3. Requer Test Summary (Resumo de Teste).' },
-      { section: '4.2', topic: 'Identificação', title: 'Lista de Artigos Perigosos', desc: 'A "Tabela Azul" central do manual.', details: 'Contém os dados primários de transporte: UN Number, Proper Shipping Name (PSN), Classe ou Divisão de Risco e Instruções de Embalagem (PI).' },
-      { section: '5.0.2', topic: 'Embalagem', title: 'Requisitos Gerais de Embalagem', desc: 'Padrões mínimos de construção.', details: 'As embalagens devem resistir a vibrações, variações de temperatura e diferenciais de pressão (95 kPa) comuns no modal aéreo.' },
-      { section: '5.0.2.4', topic: 'Embalagem', title: 'Prevenção de Ativação e Curto', desc: 'Regra física de proteção interna.', details: 'As baterias devem ser protegidas individualmente para evitar contato com materiais condutores e fixadas para evitar movimento durante o voo.' },
-      { section: '7.1.5.5', topic: 'Marcação', title: 'Marca de Bateria de Lítio (Desenho)', desc: 'Especificações gráficas mandatória.', details: 'Borda hachurada vermelha, retângulo min 100x100mm. Deve incluir o UN Number correto e um telefone para informações adicionais.' },
-      { section: '7.2.2.3', topic: 'Etiquetagem', title: 'Etiqueta Classe 9A (Risco)', desc: 'Risco específico para remessas reguladas.', details: 'Etiqueta de risco específica para baterias de lítio (Seção I). Apresenta sete listras pretas verticais na parte superior e símbolo de bateria na inferior.' },
-      { section: '8.1', topic: 'Documentação', title: 'Preenchimento da DGD', desc: 'Normas para a Declaração do Expedidor.', details: 'Exige preenchimento legível, uso de PSN oficial, UN Number, Classe 9, Peso Líquido ou Wh, e Instrução de Embalagem aplicada (ex: 965-IA).' },
-      { section: '9.3', topic: 'Manuseio', title: 'Segregação na Estiva', desc: 'Incompatibilidades críticas de carregamento.', details: 'Baterias reguladas não podem ser estivadas adjacentes a explosivos ou materiais inflamáveis que exijam etiqueta de risco.' },
+      { section: '1.2.7', topic: 'Responsabilidades', title: 'Responsabilidades do Expedidor', desc: 'Obrigação legal primária do Shipper.', details: 'O expedidor deve garantir que os artigos não são proibidos e que estão devidamente classificados, embalados, marcados, etiquetados e documentados conforme o DGR.' },
+      { section: '1.3', topic: 'Treinamento', title: 'Treinamento CBTA', desc: 'Capacitação baseada em competências.', details: 'Todo pessoal que oferece baterias de lítio deve possuir treinamento verificado a cada 24 meses seguindo o modelo Competency-Based Training and Assessment (CBTA).' },
+      { section: '1.6.1', topic: 'Treinamento', title: 'Instrução Adequada (Seção II)', desc: 'Requisito simplificado para pequenas remessas.', details: 'Expedidores de Seção II devem receber instrução sobre os riscos das baterias e os requisitos de proteção contra curtos e ativação.' },
+      { section: '2.3', topic: 'Limitações', title: 'Provisões para Passageiros', desc: 'Regras para PED e baterias sobressalentes.', details: 'Power Banks são PROIBIDOS na mala despachada. Devem ser levados na bagagem de mão. Limite de 100Wh (sem limite de qtde) ou 160Wh (max 2 com aprovação).' },
+      { section: '2.4', topic: 'Limitações', title: 'Correio Aéreo (UPU)', desc: 'Restrição em malas postais internacionais.', details: 'É proibido enviar baterias soltas por correio internacional. Baterias contidas em equipamentos (Seção II) podem ser aceitas com limites e aprovação postal.' },
+      { section: '2.8', topic: 'Limitações', title: 'Variações de Estado e Operador', desc: 'Regras específicas de países e cias aéreas.', details: 'Sempre prevalece a regra mais restritiva. Ex: L7-01 da LATAM proíbe UN 3480 em aeronaves de passageiros.' },
+      { section: '3.9.2.6', topic: 'Classificação', title: 'Critérios de Lítio (UN 38.3)', desc: 'Testes mandatórios de design.', details: 'Toda célula ou bateria deve ser submetida aos testes T1 (Altitude) a T8 (Descarga Forçada). Deve operar sob um sistema de gestão de qualidade certificado.' },
+      { section: '4.2', topic: 'Identificação', title: 'Lista de Artigos Perigosos', desc: 'Tabela oficial (Páginas Azuis).', details: 'Define o Nome Correto (PSN), UN Number, Classe 9 e Instruções de Embalagem (PI) para aeronaves PAX e CAO.' },
+      { section: '4.4', topic: 'Identificação', title: 'Disposições Especiais (SPs)', desc: 'Série A de regras específicas.', details: 'A coluna M das páginas azuis remete à Seção 4.4, detalhando exceções ou exigências extras para cada UN.' },
+      { section: '5.0.2', topic: 'Embalagem', title: 'Requisitos Gerais de Embalagem', desc: 'Padrões de construção e segurança.', details: 'Embalagens devem resistir a vibrações e variações térmicas (-40°C a +55°C) e de pressão (95 kPa).' },
+      { section: '5.0.2.4', topic: 'Embalagem', title: 'Prevenção de Curto-Circuito', desc: 'Regra física mandatória.', details: 'Terminais devem estar isolados ou protegidos de modo que o contato com materiais condutores seja fisicamente impossível.' },
+      { section: '5.0.3', topic: 'Embalagem', title: 'Sobreembalagem (Overpack)', desc: 'Consolidação de volumes unitários.', details: 'Volumes internos devem ser homologados. A sobreembalagem deve portar a marca "OVERPACK" e reproduzir todas as etiquetas de perigo visivelmente.' },
+      { section: '7.1.5.5', topic: 'Marcação', title: 'Marca de Bateria de Lítio', desc: 'Especificações gráficas do símbolo.', details: 'Retângulo com bordas hachuradas vermelhas. Deve conter o UN Number e telefone. Tamanho mínimo: 100x100mm (ou 100x70mm se volume pequeno).' },
+      { section: '7.2.2.3', topic: 'Etiquetagem', title: 'Etiqueta Classe 9A', desc: 'Risco específico para baterias.', details: 'Etiqueta de risco específica para Baterias de Lítio (Seção IA/IB). Metade superior com faixas verticais e metade inferior com símbolo de baterias.' },
+      { section: '8.1.6', topic: 'Documentação', title: 'Preenchimento da DGD', desc: 'Padrões da declaração legal.', details: 'Campos obrigatórios: Nome do Expedidor, Destinatário, UN Number, PSN, Classe 9, Quantidade Líquida e PI aplicada.' },
+      { section: '9.3', topic: 'Manuseio', title: 'Segregação na Estiva', desc: 'Incompatibilidades químicas.', details: 'Baterias reguladas não podem ser carregadas junto com explosivos ou substâncias que emitam calor extremo.' },
+      { section: 'App F', topic: 'Emergência', title: 'Resposta a Incêndios', desc: 'Protocolo de combate ao fogo de lítio.', details: 'Uso de água em abundância para resfriar as baterias vizinhas e interromper a fuga térmica (extintores de pó ou CO2 são ineficazes no químico).' },
     ],
     en: [
-      { section: '1.2.7', topic: 'Responsibilities', title: 'Shipper Responsibilities', desc: 'Ensuring non-forbidden and compliant cargo.', details: 'Shipper is responsible for classification, packing, marking, and documentation.' }
+      { section: '1.2.7', topic: 'Rules', title: 'Shipper Responsibilities', desc: 'Legal primary obligation.', details: 'Shipper must ensure articles are not forbidden and are properly classified, packed, marked, labeled, and documented.' },
     ],
     es: [
-      { section: '1.2.7', topic: 'Responsabilidades', title: 'Responsabilidades del Expedidor', desc: 'Garantizar el cumplimiento total del DGR.', details: 'El expedidor es el responsable legal de la carga.' }
+      { section: '1.2.7', topic: 'Reglas', title: 'Responsabilidades del Expedidor', desc: 'Obligación legal primaria.', details: 'El expedidor debe garantizar que los artículos no están prohibidos y cumplen con el DGR.' },
     ]
   };
   
@@ -137,41 +145,40 @@ const getGroupKey = (section: string) => {
 const getSPData = (lang: Language) => {
   const data = {
     pt: [
-      { code: 'A1', title: 'A1: Massa Líquida em PAX', desc: 'Restrições para aeronaves de passageiros.', details: 'Artigos proibidos em PAX conforme Tabela 4.2 podem ser aceitos sob aprovação dos Estados de Origem e Operador. Requer anotação "A1" na DGD.', reference: 'DGR 4.4' },
-      { code: 'A2', title: 'A2: Variância em Quantidade (>limite)', desc: 'Aprovações para exceder limites de tabela.', details: 'Requer aprovação escrita da autoridade competente do Estado de Origem, Operador e Estados de trânsito/sobrevoo.', reference: 'DGR 4.4' },
-      { code: 'A21', title: 'A21: Baterias Úmidas em Cadeiras', desc: 'Instalação em auxílios de mobilidade.', details: 'Baterias devem estar fixadas verticalmente e protegidas contra danos físicos e vazamentos acidentais de eletrólito.', reference: 'DGR 4.4' },
-      { code: 'A45', title: 'A45: Baterias Alcalinas/NiCd', desc: 'Isenção para tecnologias de bateria seca.', details: 'Baterias não mencionadas explicitamente na Tabela 4.2 (alcalinas, NiCd, NiMH) não são restritas se protegidas contra curto-circuito.', reference: 'DGR 4.4' },
-      { code: 'A48', title: 'A48: Isenção de Teste de Embalagem', desc: 'Para baterias instaladas em equipamentos.', details: 'Volumes da Seção II contendo baterias instaladas em equipamentos não precisam de embalagem de especificação UN se protegidos adequadamente.', reference: 'DGR 4.4' },
-      { code: 'A51', title: 'A51: Massa Unitária > 35kg (CAO)', desc: 'Baterias de grande porte em cargueiros.', details: 'Baterias individuais com massa líquida superior a 35 kg podem ser transportadas em Aeronaves de Carga (CAO) com aprovação estatal.', reference: 'DGR 4.4' },
-      { code: 'A67', title: 'A67: Baterias Não-Derramáveis', desc: 'Isenção para baterias úmidas seladas (VRLA).', details: 'Baterias que passam nos testes de vibração e diferencial de pressão (95 kPa) sem vazamento não são restritas.', reference: 'DGR 4.4', risk: 'low' },
-      { code: 'A87', title: 'A87: Artigos com Bateria Úmida', desc: 'Equipamento contendo bateria eletrolítica.', details: 'O equipamento deve estar imobilizado e a embalagem marcada com setas de orientação "This Way Up".', reference: 'DGR 4.4' },
-      { code: 'A88', title: 'A88: Protótipos/Pré-produção', desc: 'Transporte de baterias sem certificação UN 38.3.', details: 'Exige aprovação estatal, transporte exclusivo em CAO e embalagem de alta performance (PG I/X).', reference: 'IATA PI 910', risk: 'high' },
-      { code: 'A94', title: 'A94: Pilhas a Combustível (Fuel Cells)', desc: 'Regras para sistemas geradores elétricos.', details: 'Equipamentos contendo pilhas a combustível devem cumprir requisitos de estanqueidade e proteção estrutural.', reference: 'DGR 4.4' },
-      { code: 'A99', title: 'A99: Massa Líquida Unitária > 35kg', desc: 'Aprovações para baterias soltas gigantes.', details: 'Requer aprovação governamental do Estado de Origem. Aplica-se ao transporte de baterias industriais unitárias de alta capacidade.', reference: 'IATA PI 974', risk: 'high' },
-      { code: 'A123', title: 'A123: Baterias Elétricas Gerais', desc: 'Prevenção de curto-circuito em baterias comuns.', details: 'Baterias alcalinas, NiCd e secas não são reguladas desde que os terminais estejam tapados para evitar calor perigoso.', reference: 'DGR 4.4', risk: 'low' },
-      { code: 'A154', title: 'A154: Defeituosas ou Danificadas', desc: 'PROIBIÇÃO TOTAL POR RISCO CRÍTICO.', details: 'Baterias identificadas pelo fabricante como inseguras ou danificadas fisicamente (inchadas, vazando, quebradas) são proibidas no transporte aéreo.', reference: 'IATA DGR 3.9.2.6', risk: 'forbidden' },
-      { code: 'A164', title: 'A164: Ativação Inadvertida', desc: 'Proteção contra funcionamento em trânsito.', details: 'Equipamentos portáteis devem ter interruptores protegidos ou baterias desconectadas para evitar geração de calor durante o voo.', reference: 'IATA DGR 4.4' },
-      { code: 'A176', title: 'A176: Embalagens Ventiladas', desc: 'Emissões gasosas controladas.', details: 'Embalagens para baterias que ventilam em condições normais devem possuir meios de descompressão sem comprometer a integridade do volume.', reference: 'IATA DGR 4.4' },
-      { code: 'A181', title: 'A181: Embalagem Mista (Ion + Metal)', desc: 'Íon e Metal no mesmo volume externo.', details: 'Permite combinar baterias de íon e metal (UN 3481/3091) na mesma embalagem externa. Aplica-se a marca de lítio com ambos os UN Numbers.', reference: 'IATA DGR 4.4' },
-      { code: 'A182', title: 'A182: Baterias de Diferentes Químicas', desc: 'Equipamentos com fontes de energia mistas.', details: 'Dispositivos contendo baterias de diferentes tecnologias devem ser protegidos conforme as regras de cada química.', reference: 'IATA DGR 4.4' },
-      { code: 'A183', title: 'A183: Resíduos e Reciclagem', desc: 'Baterias para descarte final.', details: 'PROIBIDO no transporte aéreo, exceto sob aprovação estatal extraordinária. Destinadas ao modal marítimo ou terrestre.', reference: 'IATA DGR 4.4', risk: 'forbidden' },
-      { code: 'A185', title: 'A185: Baterias de Reserva Integradas', desc: 'Instalação de backups em dispositivos.', details: 'Dispositivos portáteis com baterias de reserva devem ser protegidos contra ativação e curtos. Aplicável a baterias CMOS.', reference: 'IATA DGR 4.4' },
-      { code: 'A190', title: 'A190: Baterias em Bagagem (PED)', desc: 'Limites de segurança para passageiros.', details: 'Regras para o transporte de dispositivos eletrônicos e baterias sobressalentes portadas por viajantes.', reference: 'IATA DGR 2.3' },
-      { code: 'A191', title: 'A191: Marcação e Etiquetagem de Lítio', desc: 'Padrões para aplicação da marca hachurada.', details: 'Detalha a forma correta de aplicar a marca vermelha para garantir legibilidade e identificação rápida.', reference: 'IATA DGR 7.1' },
-      { code: 'A199', title: 'A199: Baterias Ni-MH (Aéreo)', desc: 'Status de não restrito para o modal aéreo.', details: 'Baterias Ni-MH não são restritas no aéreo desde que protegidas contra curto-circuito. (UN 3496 aplica-se apenas ao marítimo).', reference: 'IATA DGR 4.4', risk: 'low' },
-      { code: 'A201', title: 'A201: Emergência Médica e Humanitária', desc: 'Exceções para transporte de UN 3480 em PAX.', details: 'Permite o transporte em aeronave de passageiros apenas para fins de socorro urgentes sob aprovação estatal.', reference: 'IATA DGR 4.4' },
-      { code: 'A206', title: 'A206: Marca de Bateria de Lítio (Novo Design)', desc: 'Especificação visual mandatória atualizada.', details: 'Substitui o design anterior da marca de lítio. O novo padrão deve ser usado exclusivamente para remessas da Seção II.', reference: 'IATA DGR 7.2.2' },
-      { code: 'A213', title: 'A213: Baterias de Sódio-Íon (UN 3551)', desc: 'Regras para novas tecnologias de Sódio.', details: 'Devem cumprir requisitos similares às de lítio quanto ao UN 38.3 e limites de SoC.', reference: 'IATA DGR 4.4' },
-      { code: 'A331', title: 'A331: Estado de Carga (SoC ≤ 30%)', desc: 'Limite de segurança crítico para UN 3480.', details: 'Baterias soltas de íon-lítio devem ser oferecidas para transporte com SoC máximo de 30%. Acima disso, requer aprovação governamental.', reference: 'IATA PI 965', risk: 'high' },
-      { code: 'A334', title: 'A334: Baterias no Correio Aéreo Internacional', desc: 'Restrições para malas postais.', details: 'Proibição de baterias soltas no correio internacional. Apenas Seção II instalada em equipamentos pode ser aceita.', reference: 'IATA DGR 2.4', risk: 'forbidden' },
-      { code: 'A802', title: 'A802: Rigidez da Embalagem Externa', desc: 'Construção mandatória para Seção II.', details: 'Volumes da Seção II devem possuir embalagem externa rígida e forte. Envelopes e sacos plásticos são estritamente proibidos.', reference: 'IATA DGR 5.0.2' }
+      { code: 'A1', title: 'A1: Massa Líquida em PAX', desc: 'Restrições para aeronaves de passageiros.', details: 'Artigos proibidos em PAX (como UN 3480/3090) podem ser aceitos sob aprovação dos Estados de Origem e Operador. Requer anotação "A1" na DGD.', reference: 'IATA DGR 4.4' },
+      { code: 'A2', title: 'A2: Variância em Massa (>limite)', desc: 'Aprovações para exceder limites de tabela.', details: 'Requer aprovação escrita da autoridade competente do Estado de Origem, Operador e Estados de sobrevoo.', reference: 'IATA DGR 4.4' },
+      { code: 'A21', title: 'A21: Baterias Úmidas em Cadeiras', desc: 'Instalação em auxílios de mobilidade.', details: 'Baterias devem estar fixadas verticalmente e protegidas contra danos e vazamentos de eletrólito.', reference: 'IATA DGR 4.4' },
+      { code: 'A45', title: 'A45: Baterias Alcalinas/NiCd', desc: 'Isenção para tecnologias de bateria seca.', details: 'Baterias não mencionadas explicitamente na Tabela 4.2 (alcalinas, NiCd, NiMH) não são restritas se protegidas contra curto-circuito.', reference: 'IATA DGR 4.4' },
+      { code: 'A48', title: 'A48: Isenção de Teste de Embalagem', desc: 'Para baterias instaladas (Seção II).', details: 'Volumes da Seção II contendo baterias instaladas em equipamentos não precisam de embalagem de especificação UN se protegidos adequadamente.', reference: 'IATA DGR 4.4' },
+      { code: 'A51', title: 'A51: Massa Unitária > 35kg (CAO)', desc: 'Baterias grandes em aeronaves de carga.', details: 'Baterias individuais com massa líquida acima de 35 kg podem ser transportadas em CAO com aprovação governamental específica.', reference: 'IATA DGR 4.4' },
+      { code: 'A67', title: 'A67: Baterias Não-Derramáveis', desc: 'Isenção para baterias úmidas seladas (VRLA).', details: 'Baterias que passam nos testes de vibração e diferenciais de pressão (95 kPa) sem vazamento não são restritas.', reference: 'IATA DGR 4.4', risk: 'low' },
+      { code: 'A87', title: 'A87: Artigos com Bateria Úmida', desc: 'Proteção e orientação vertical mandatória.', details: 'O equipamento deve estar imobilizado e a embalagem marcada com setas de orientação "This Way Up".', reference: 'IATA DGR 4.4' },
+      { code: 'A88', title: 'A88: Protótipos/Pré-produção', desc: 'Transporte sem testes UN 38.3 completos.', details: 'Exige aprovação estatal e transporte exclusivo em Aeronaves de Carga (CAO). Requer embalagem de alta performance (PG I/X).', reference: 'IATA PI 910', risk: 'high' },
+      { code: 'A94', title: 'A94: Pilhas a Combustível (Fuel Cells)', desc: 'Regras para eletrólitos em sistemas elétricos.', details: 'Equipamentos contendo pilhas a combustível devem cumprir requisitos específicos de estanqueidade e proteção física.', reference: 'IATA DGR 4.4' },
+      { code: 'A99', title: 'A99: Massa Líquida Unitária > 35kg', desc: 'Baterias soltas gigantes (UN 3480/3090).', details: 'Requer aprovação governamental do Estado de Origem. Aplica-se ao transporte de baterias industriais unitárias de grande porte.', reference: 'IATA PI 974', risk: 'high' },
+      { code: 'A123', title: 'A123: Baterias Elétricas Gerais', desc: 'Isolamento mandatório de terminais.', details: 'Baterias não reguladas (Ex: Alcalinas) são isentas de marcação DESDE QUE os terminais estejam tapados para evitar calor perigoso.', reference: 'IATA DGR 4.4', risk: 'low' },
+      { code: 'A154', title: 'A154: Defeituosas ou Danificadas', desc: 'PROIBIÇÃO TOTAL POR RISCO DE EXPLOSÃO.', details: 'Células ou baterias identificadas pelo fabricante como inseguras ou danificadas fisicamente são proibidas no transporte aéreo.', reference: 'IATA DGR 3.9.2.6', risk: 'forbidden' },
+      { code: 'A164', title: 'A164: Ativação Inadvertida', desc: 'Proteção contra funcionamento acidental.', details: 'Equipamentos devem ter interruptores protegidos ou baterias desconectadas para evitar geração de calor durante o voo.', reference: 'IATA DGR 4.4' },
+      { code: 'A176', title: 'A176: Embalagens Ventiladas', desc: 'Para baterias que podem emitir gases.', details: 'Embalagens para baterias que ventilam em condições normais devem permitir a saída controlada de gases sem comprometer o volume.', reference: 'IATA DGR 4.4' },
+      { code: 'A181', title: 'A181: Embalagem Mista (Ion + Metal)', desc: 'Íon e Metal no mesmo volume externo.', details: 'Permite combinar baterias de íon e metal (UN 3481/3091) na mesma embalagem externa. Aplica-se a regra mais restritiva.', reference: 'IATA DGR 4.4' },
+      { code: 'A183', title: 'A183: Resíduos e Reciclagem', desc: 'Baterias destinadas ao descarte final.', details: 'PROIBIDO no transporte aéreo, exceto com aprovação especial. Destinadas geralmente ao modal marítimo por segurança.', reference: 'IATA DGR 4.4', risk: 'forbidden' },
+      { code: 'A185', title: 'A185: Baterias de Reserva Integradas', desc: 'Proteção para fontes de backup em PED.', details: 'Dispositivos com baterias de reserva devem ser protegidos contra ativação e curtos. Aplicável a memórias CMOS e backups.', reference: 'IATA DGR 4.4' },
+      { code: 'A190', title: 'A190: Baterias em Bagagem', desc: 'Limites para passageiros portando PEDs.', details: 'Aplica-se ao transporte de dispositivos eletrônicos contendo baterias de lítio por passageiros ou tripulantes.', reference: 'IATA DGR 2.3' },
+      { code: 'A191', title: 'A191: Marcação e Etiquetagem', desc: 'Padrões de aplicação visual.', details: 'Detalha a forma correta de aplicar as etiquetas de perigo e marcas nos volumes para evitar ambiguidade.', reference: 'IATA DGR 7.1' },
+      { code: 'A199', title: 'A199: Baterias Ni-MH', desc: 'Não restrito para IATA (Modal Aéreo).', details: 'Apenas os terminais devem estar protegidos. Não se aplicam marcas de lítio ou etiquetas da Classe 9. (UN 3496 é apenas marítimo).', reference: 'IATA DGR 4.4', risk: 'low' },
+      { code: 'A201', title: 'A201: Emergência Médica e Humanitária', desc: 'Exceção para UN 3480/3090 em PAX.', details: 'Permite transporte em aeronave de passageiros sob aprovação exclusiva para fins médicos ou de socorro urgentes.', reference: 'IATA DGR 4.4' },
+      { code: 'A206', title: 'A206: Marca de Bateria de Lítio (Design)', desc: 'Especificação técnica da marca vermelha.', details: 'A nova marca deve seguir as proporções exatas e UN Number legível. Substitui todas as marcas antigas.', reference: 'IATA DGR 7.2.2' },
+      { code: 'A213', title: 'A213: Baterias de Sódio-Íon (UN 3551)', desc: 'Regras para tecnologia Sódio-Íon.', details: 'Devem cumprir requisitos similares ao lítio (UN 38.3) e limites de SoC (30% para soltas). Classificação UN 3551 ou UN 3552.', reference: 'IATA DGR 4.4' },
+      { code: 'A331', title: 'A331: Estado de Carga (SoC ≤ 30%)', desc: 'Limite crítico para segurança de UN 3480.', details: 'Baterias soltas devem ser embarcadas com SoC ≤ 30% da capacidade nominal. Acima disso, exige aprovação estatal.', reference: 'IATA PI 965', risk: 'high' },
+      { code: 'A334', title: 'A334: Baterias no Correio Internacional', desc: 'Restrição em malas postais da UPU.', details: 'Apenas baterias instaladas em equipamentos (Seção II) podem ser enviadas por correio aéreo internacional com aprovação.', reference: 'IATA DGR 2.4', risk: 'forbidden' },
+      { code: 'A802', title: 'A802: Embalagem Externa Rígida', desc: 'Construção mandatória da embalagem.', details: 'Volumes da Seção II devem ser rígidos e fortes. O uso de envelopes (Padded bags) ou sacos plásticos é terminantemente proibido.', reference: 'IATA DGR 5.0.2' }
     ],
     en: [
-      { code: 'A154', title: 'A154: Damaged / Defective', desc: 'STRICT AIR TRANSPORT PROHIBITION.', details: 'Batteries identified by the manufacturer as unsafe or damaged are forbidden.', reference: 'IATA DGR 3.9.2.6', risk: 'forbidden' },
-      { code: 'A331', title: 'A331: SoC Limit (30%)', desc: 'Mandatory limit for UN 3480 safety.', details: 'Loose lithium ion batteries must be shipped at 30% State of Charge or less.', reference: 'IATA PI 965', risk: 'high' }
+      { code: 'A154', title: 'A154: Damaged / Defective', desc: 'STRICT PROHIBITION DUE TO FIRE RISK.', details: 'Batteries identified by the manufacturer as unsafe or damaged are forbidden in air transport.', reference: 'IATA DGR 3.9.2.6', risk: 'forbidden' },
+      { code: 'A331', title: 'A331: SoC Limit (30%)', desc: 'Mandatory safety limit for UN 3480.', details: 'Loose lithium ion batteries must be shipped at 30% SoC or less.', reference: 'IATA PI 965', risk: 'high' },
     ],
     es: [
-      { code: 'A154', title: 'A154: Dañadas / Defectuosas', desc: 'PROHIBICIÓN TOTAL DE TRANSPORTE.', details: 'Las baterías identificadas como inseguras o dañadas están prohibidas en el aire.', reference: 'IATA DGR 3.9.2.6', risk: 'forbidden' }
+      { code: 'A154', title: 'A154: Dañadas / Defectuosas', desc: 'PROHIBICIÓN TOTAL DE TRANSPORTE.', details: 'Baterías identificadas como inseguras o dañadas están prohibidas en el aire.', reference: 'IATA DGR 3.9.2.6', risk: 'forbidden' },
     ]
   };
   return data[lang];
@@ -186,9 +193,9 @@ const SECTION_METADATA: Record<string, { title: string, icon: any }> = {
   '6': { title: 'Seção 6 - Especificações UN', icon: ShieldCheck },
   '7': { title: 'Seção 7 - Etiquetagem', icon: Tag },
   '8': { title: 'Seção 8 - Documentação', icon: FileText },
-  '9': { title: 'Seção 9 - Manuseio & Aceite', icon: HardHat },
-  'PI': { title: 'Instruções de Embalagem (PI)', icon: ClipboardList },
-  'App': { title: 'Glossário & Apêndices', icon: LifeBuoy },
+  '9': { title: 'Seção 9 - Manuseio & NOTOC', icon: HardHat },
+  'PI': { title: 'Instruções de Embalagem', icon: ClipboardList },
+  'App': { title: 'Glossário & Emergência', icon: LifeBuoy },
 };
 
 const UI_TEXT = {
@@ -228,34 +235,34 @@ type TabType = 'SP' | 'GLOSSARY' | 'PKG' | 'CHK' | 'DGR' | 'SEG';
 
 // Consolidating all data into one searchable export for ComplianceResult tooltips and UI
 export const SPECIAL_PROVISIONS_DATA = [
-    { code: 'A1', desc: 'Permite transporte em PAX sob aprovação estatal dos Estados de Origem e Operador.', reference: 'IATA DGR 4.4' },
-    { code: 'A2', desc: 'Aprovações estatais para variância de quantidade ou embalagem acima dos limites da Tabela 4.2.', reference: 'IATA DGR 4.4' },
-    { code: 'A21', desc: 'Regras para baterias úmidas instaladas em cadeiras de rodas ou auxílios de mobilidade.', reference: 'IATA DGR 4.4' },
-    { code: 'A45', desc: 'Isenção para baterias alcalinas, NiCd e de tecnologia seca se protegidas contra curtos.', reference: 'IATA DGR 4.4' },
-    { code: 'A48', desc: 'Isenção de teste de embalagem UN para baterias instaladas (Seção II) se houver proteção adequada.', reference: 'IATA DGR 4.4' },
-    { code: 'A51', desc: 'Baterias individuais acima de 35kg líquidos permitidas em CAO com aprovação governamental.', reference: 'IATA DGR 4.4' },
-    { code: 'A67', desc: 'Isenção para baterias úmidas seladas (Não-Derramáveis) que passam nos testes de pressão 95kPa.', reference: 'IATA DGR 4.4' },
-    { code: 'A87', desc: 'Artigos contendo bateria úmida: exigência de imobilização vertical e marcação de orientação.', reference: 'IATA DGR 4.4' },
-    { code: 'A88', desc: 'Baterias protótipo sem certificação UN 38.3. Exige Aprovação Estatal e transporte via CAO.', reference: 'IATA PI 910' },
-    { code: 'A94', desc: 'Requisitos específicos para dispositivos contendo Pilhas a Combustível (Fuel Cells).', reference: 'IATA DGR 4.4' },
-    { code: 'A99', desc: 'Exige Aprovação para exceder o limite unitário de 35kg líquidos para baterias soltas (UN 3480/3090).', reference: 'IATA PI 974' },
-    { code: 'A123', desc: 'Baterias elétricas de uso comum (Alcalinas, etc) não são reguladas se terminais estiverem protegidos.', reference: 'IATA DGR 4.4' },
-    { code: 'A154', desc: 'PROIBIÇÃO ESTRITA: Células ou baterias identificadas como defeituosas ou danificadas fisicamente.', reference: 'IATA DGR 3.9.2.6' },
-    { code: 'A164', desc: 'Prevenção mandatória de ativação inadvertida para baterias instaladas em equipamentos.', reference: 'IATA DGR 4.4' },
-    { code: 'A176', desc: 'Permissão para uso de embalagens ventiladas para baterias que emitem gases em condições normais.', reference: 'IATA DGR 4.4' },
-    { code: 'A181', desc: 'Permite combinar baterias de Íon e Metal Lítio na mesma embalagem externa em UN 3481/3091.', reference: 'IATA DGR 4.4' },
-    { code: 'A182', desc: 'Equipamentos contendo baterias de diferentes tecnologias químicas em um mesmo volume.', reference: 'IATA DGR 4.4' },
-    { code: 'A183', desc: 'PROIBIÇÃO TOTAL de baterias destinadas ao descarte final ou reciclagem no transporte aéreo.', reference: 'IATA DGR 4.4' },
-    { code: 'A185', desc: 'Regras para equipamentos com baterias de reserva integradas (ex: memórias CMOS).', reference: 'IATA DGR 4.4' },
-    { code: 'A190', desc: 'Limites de transporte para passageiros portando dispositivos eletrônicos (PED).', reference: 'IATA DGR 2.3' },
-    { code: 'A191', desc: 'Padrões de aplicação e design para etiquetas e marcas externas em volumes de lítio.', reference: 'IATA DGR 7.1' },
-    { code: 'A199', desc: 'Ni-MH: Classificada como não restrita para IATA desde que terminais estejam protegidos contra curto.', reference: 'IATA DGR 4.4' },
-    { code: 'A201', desc: 'Exceção para UN 3480/3090 em PAX sob aprovação exclusiva para emergência médica urgentes.', reference: 'IATA DGR 4.4' },
-    { code: 'A206', risk: 'medium', desc: 'Obrigatório uso do novo design padronizado para a marca retangular hachurada de lítio.', reference: 'IATA DGR 7.2.2' },
-    { code: 'A213', desc: 'Baterias de Sódio-Íon (UN 3551/3552): regras de design, teste e SoC análogas às de lítio.', reference: 'IATA DGR 4.4' },
-    { code: 'A331', desc: 'Limite mandatório de State of Charge (SoC) de no máximo 30% para embarque de UN 3480.', reference: 'IATA PI 965' },
-    { code: 'A334', desc: 'Baterias soltas (UN 3480/3090) são proibidas no serviço de correio aéreo internacional UPU.', reference: 'IATA DGR 2.4' },
-    { code: 'A802', desc: 'Exigência de construção rígida e forte para embalagens externas de Seção II (Sacos proibidos).', reference: 'IATA DGR 5.0.2' }
+    { code: 'A1', desc: 'Permite transporte em PAX sob aprovação estatal.', reference: 'IATA DGR 4.4' },
+    { code: 'A2', desc: 'Aprovações estatais para variância de quantidade/embalagem.', reference: 'IATA DGR 4.4' },
+    { code: 'A21', desc: 'Baterias úmidas em cadeiras de rodas (proteção mandatória).', reference: 'IATA DGR 4.4' },
+    { code: 'A45', desc: 'Isenção para alcalinas/NiCd se protegidas contra curtos.', reference: 'IATA DGR 4.4' },
+    { code: 'A48', desc: 'Isenção de teste UN para baterias instaladas (Seção II).', reference: 'IATA DGR 4.4' },
+    { code: 'A51', desc: 'Baterias >35kg em CAO com aprovação específica.', reference: 'IATA DGR 4.4' },
+    { code: 'A67', desc: 'Isenção para baterias úmidas seladas (Não-Derramáveis).', reference: 'IATA DGR 4.4' },
+    { code: 'A87', desc: 'Artigos com bateria úmida: fixação vertical e marcação mandatórias.', reference: 'IATA DGR 4.4' },
+    { code: 'A88', desc: 'Protótipos (sem UN38.3). Exige Aprovação Governamental e CAO.', reference: 'IATA PI 910' },
+    { code: 'A94', desc: 'Regras para Pilhas a Combustível (Fuel Cells).', reference: 'IATA DGR 4.4' },
+    { code: 'A99', desc: 'Exige Aprovação para exceder limite unitário de 35kg líquidos.', reference: 'IATA PI 974' },
+    { code: 'A123', desc: 'Baterias elétricas gerais não reguladas se protegidas contra curtos.', reference: 'IATA DGR 4.4' },
+    { code: 'A154', desc: 'PROIBIÇÃO TOTAL: Baterias defeituosas ou danificadas.', reference: 'IATA DGR 3.9.2.6' },
+    { code: 'A164', desc: 'Prevenção mandatória de ativação acidental do equipamento.', reference: 'IATA DGR 4.4' },
+    { code: 'A176', desc: 'Embalagens ventiladas para baterias que emitem gases.', reference: 'IATA DGR 4.4' },
+    { code: 'A181', desc: 'Permite misturar Íon e Metal no mesmo volume externo.', reference: 'IATA DGR 4.4' },
+    { code: 'A182', desc: 'Equipamentos com baterias de diferentes químicas.', reference: 'IATA DGR 4.4' },
+    { code: 'A183', desc: 'PROIBIDO: Baterias para lixo/descarte no ar.', reference: 'IATA DGR 4.4' },
+    { code: 'A185', desc: 'Equipamentos com baterias de reserva (proteção contra curtos).', reference: 'IATA DGR 4.4' },
+    { code: 'A190', desc: 'Baterias de lítio em dispositivos portáteis em bagagem.', reference: 'IATA DGR 2.3' },
+    { code: 'A191', desc: 'Padrões de marcação e etiquetagem externa.', reference: 'IATA DGR 7.1' },
+    { code: 'A199', desc: 'Ni-MH: Não restrito no aéreo se os terminais estiverem protegidos.', reference: 'IATA DGR 4.4' },
+    { code: 'A201', desc: 'Exceção para UN 3480 em PAX para urgência médica aprovada.', reference: 'IATA DGR 4.4' },
+    { code: 'A206', risk: 'medium', desc: 'Uso obrigatório do design padronizado para a marca de lítio.', reference: 'IATA DGR 7.2.2' },
+    { code: 'A213', desc: 'Baterias de Sódio-Íon (UN 3551/3552) - Lógica similar ao Lítio.', reference: 'IATA DGR 4.4' },
+    { code: 'A331', desc: 'Limite mandatório de 30% SoC para UN 3480.', reference: 'IATA PI 965' },
+    { code: 'A334', desc: 'Proibição de baterias soltas no correio aéreo internacional.', reference: 'IATA DGR 2.4' },
+    { code: 'A802', desc: 'Embalagens externas rígidas e fortes mandatórias (Seção II).', reference: 'IATA DGR 5.0.2' }
 ];
 
 export function SpecialProvisionsDictionary({ language }: { language: Language }) {
