@@ -92,7 +92,6 @@ const ComplianceResult: React.FC<Props> = ({ result, specs, onOpenDictionary }) 
   const rawLabels = result.labels || [];
   const packagingSpecs = result.packagingSpecs || [];
 
-  // Filter labels to ensure OVERPACK only appears when strictly required by current specs
   const visibleLabels = rawLabels.filter(label => {
     const text = label.toLowerCase();
     if (text.includes('overpack') || text.includes('sobreembalagem')) {
@@ -107,13 +106,12 @@ const ComplianceResult: React.FC<Props> = ({ result, specs, onOpenDictionary }) 
   const getSPDetails = (code: string) => {
     const cleanCode = code.split(' ')[0].replace(/[^A-Z0-9]/g, '');
     const entry = SPECIAL_PROVISIONS_DATA.find(sp => sp.code === cleanCode);
-    return entry ? entry : { 
+    return entry ? { desc: entry.desc, reference: entry.reference } : { 
       desc: 'Consulte o Manual IATA DGR (Seção 4.4) para detalhes completos sobre esta disposição.',
       reference: 'DGR 4.4' 
     };
   };
 
-  // Header Icon Component based on status
   const HeaderIcon = () => {
     if (result.status === ComplianceStatus.FORBIDDEN_ALL) {
        return (
@@ -153,7 +151,7 @@ const ComplianceResult: React.FC<Props> = ({ result, specs, onOpenDictionary }) 
         title: 'Marcação Overpack',
         desc: 'Obrigatório: Carga consolidada com etiquetas internas ocultas.',
         dims: 'Min. 12mm alt.',
-        tooltip: 'MANDATÓRIO: Exigido quando volumes com etiquetas de perigo são consolidados e as etiquetas internas ficam ocultas. Se as etiquetas de perigo forem reproduzidas do lado de fora do Overpack, esta marca NÃO é necessária (IATA 7.1.7).',
+        tooltip: 'MANDATÓRIO: Exigido quando volumes com etiquetas de perigo são consolidados e as etiquetas internas ficam ocultas.',
         style: 'bg-indigo-50 border-indigo-200 text-indigo-900 font-bold',
         icon: (
            <div className="h-12 w-16 bg-white border-2 border-indigo-900 flex items-center justify-center shrink-0 shadow-sm">
@@ -228,7 +226,6 @@ const ComplianceResult: React.FC<Props> = ({ result, specs, onOpenDictionary }) 
   return (
     <div className={`bg-white rounded-[2.5rem] shadow-2xl overflow-hidden border-2 ${theme.border} transition-all duration-500 animate-in fade-in slide-in-from-right-4 print:border-slate-800 print:shadow-none`}>
       
-      {/* Header Banner */}
       <div className={`${theme.bg} px-6 py-5 md:px-8 md:py-6 border-b-2 ${theme.border} flex flex-wrap items-center justify-between gap-4`}>
         <div className="flex items-center gap-4">
           <div className={`p-2.5 rounded-xl ${theme.accent} text-white shadow-md print:hidden`}>
@@ -252,17 +249,14 @@ const ComplianceResult: React.FC<Props> = ({ result, specs, onOpenDictionary }) 
       <div className={`p-6 md:p-8 lg:p-10 ${theme.bodyBg} print:bg-white`}>
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
           
-          {/* Main Column */}
           <div className="lg:col-span-7 xl:col-span-8 space-y-10">
             
-            {/* Quick Stats Grid */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
               <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm transition-transform hover:scale-[1.01] relative group/energy">
                 <div className="flex items-center gap-1.5 mb-2">
                   <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">Energia Nominal</span>
                   <HelpCircle size={10} className="text-slate-300 cursor-help" />
                   
-                  {/* Calculation Tooltip */}
                   <div className="absolute bottom-full left-6 mb-3 w-64 p-3 bg-slate-900 text-white text-[10px] font-medium rounded-xl opacity-0 group-hover/energy:opacity-100 transition-all pointer-events-none z-50 shadow-2xl leading-relaxed">
                     <span className="block font-black uppercase tracking-widest mb-1 text-coral-400 border-b border-white/10 pb-1">Metodologia de Cálculo</span>
                     {specs.type === BatteryType.LI_METAL 
@@ -271,11 +265,18 @@ const ComplianceResult: React.FC<Props> = ({ result, specs, onOpenDictionary }) 
                     <div className="absolute top-full left-4 border-4 border-transparent border-t-slate-900"></div>
                   </div>
                 </div>
-                <div className="flex items-baseline gap-2">
+                <div className="flex items-baseline gap-2 flex-wrap">
                    <div className="text-4xl font-black text-slate-800 tracking-tighter">
                     {result.energy.toFixed(2)}
                    </div>
-                   <span className="text-sm font-black text-slate-400 uppercase">{result.unit}</span>
+                   <div className="flex items-baseline gap-1">
+                      <span className="text-sm font-black text-slate-400 uppercase">{result.unit}</span>
+                      {specs.type === BatteryType.LI_METAL && (
+                        <span className="text-[10px] font-black text-coral-500 uppercase">
+                          ({(result.energy / 1000).toFixed(2)} kg)
+                        </span>
+                      )}
+                   </div>
                 </div>
               </div>
               <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm transition-transform hover:scale-[1.01]">
@@ -292,7 +293,6 @@ const ComplianceResult: React.FC<Props> = ({ result, specs, onOpenDictionary }) 
               </div>
             </div>
 
-            {/* Justification Reasoning */}
             <div className={`p-6 rounded-[2rem] border-2 text-sm font-bold leading-relaxed shadow-sm ${theme.reasoning}`}>
               <div className="flex gap-4 items-start">
                 <div className={`p-2 rounded-xl text-white mt-1 shadow-md print:hidden shrink-0 ${theme.reasoningIcon}`}>
@@ -305,7 +305,6 @@ const ComplianceResult: React.FC<Props> = ({ result, specs, onOpenDictionary }) 
               </div>
             </div>
 
-            {/* Operator Variations (LATAM focus) */}
             {isLatam && (
               <div className="bg-indigo-50/50 rounded-[2.5rem] p-6 md:p-8 border border-indigo-100 relative overflow-hidden">
                 <div className="absolute top-0 right-0 w-48 h-48 bg-white opacity-40 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none"></div>
@@ -347,7 +346,6 @@ const ComplianceResult: React.FC<Props> = ({ result, specs, onOpenDictionary }) 
               </div>
             )}
 
-            {/* Special Provisions List */}
             {specialProvisions.length > 0 && (
               <div className="bg-white rounded-[2rem] p-6 md:p-8 border-2 border-slate-200 shadow-sm animate-in fade-in slide-in-from-bottom-3">
                 <div className="flex items-center gap-2 mb-6">
@@ -383,10 +381,7 @@ const ComplianceResult: React.FC<Props> = ({ result, specs, onOpenDictionary }) 
             )}
           </div>
 
-          {/* Sidebar Area */}
           <div className="lg:col-span-5 xl:col-span-4 space-y-8">
-            
-            {/* Visual Label Checklist */}
             <div className="bg-white rounded-[2.5rem] p-6 md:p-8 border border-slate-200 shadow-sm">
                <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] text-center mb-8">Marcação e Rotulagem Exigida</h3>
                {visibleLabels.length > 0 ? (
@@ -424,7 +419,6 @@ const ComplianceResult: React.FC<Props> = ({ result, specs, onOpenDictionary }) 
                )}
             </div>
 
-            {/* Packaging Specs Card - NEW */}
             {packagingSpecs.length > 0 && (
               <div className="bg-white rounded-[2rem] p-6 md:p-8 border border-slate-200 shadow-sm">
                  <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-6 flex items-center gap-2">
@@ -442,7 +436,6 @@ const ComplianceResult: React.FC<Props> = ({ result, specs, onOpenDictionary }) 
               </div>
             )}
 
-            {/* Documents Checklist Card */}
             <div className="bg-white rounded-[2rem] p-6 md:p-8 border border-slate-200 shadow-sm">
                <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-6 flex items-center gap-2">
                 <ClipboardList size={16} className="text-indigo-500" />
@@ -462,20 +455,18 @@ const ComplianceResult: React.FC<Props> = ({ result, specs, onOpenDictionary }) 
                       </span>
                       <p className="text-[9px] font-medium text-slate-500 leading-tight">{description}</p>
                       
-                      {/* Tooltip for DGD */}
                       {isDGD && (
                         <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-64 p-3 bg-slate-900 text-white text-[10px] font-medium rounded-xl opacity-0 group-hover:opacity-100 transition-all pointer-events-none z-50 shadow-xl leading-relaxed">
                           <span className="block font-black text-coral-400 mb-1 uppercase tracking-wider">Requisito IATA 8.1</span>
-                          Declaração primária de risco. Deve ser preenchida em triplicata (3 vias) com as margens laterais hachuradas em vermelho (padrão DGD). A IATA define cópias específicas (Ex: Branca, Rosa e Azul) para distribuição.
+                          Declaração primária de risco. Deve ser preenchida em triplicata (3 vias) com as margens laterais hachuradas em vermelho (padrão DGD).
                           <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-slate-900"></div>
                         </div>
                       )}
 
-                      {/* Tooltip for Letter of Compliance */}
                       {isLoC && (
                         <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-64 p-3 bg-slate-900 text-white text-[10px] font-medium rounded-xl opacity-0 group-hover:opacity-100 transition-all pointer-events-none z-50 shadow-xl leading-relaxed">
                           <span className="block font-black text-coral-400 mb-1 uppercase tracking-wider">Recomendação Operacional</span>
-                          Embora a Seção II dispense a DGD, companhias aéreas (incluindo LATAM) podem solicitar este documento para confirmar rapidamente que a carga respeita os limites (ex: &lt;100Wh) e evitar bloqueios desnecessários na aceitação.
+                          Embora a Seção II dispense a DGD, companhias aéreas podem solicitar este documento para confirmar rapidamente que a carga respeita os limites.
                           <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-slate-900"></div>
                         </div>
                       )}
@@ -485,7 +476,6 @@ const ComplianceResult: React.FC<Props> = ({ result, specs, onOpenDictionary }) 
               </div>
             </div>
             
-            {/* Nature and Quantity Statement Card */}
             {result.awbStatement && (
               <div className="bg-white rounded-[2rem] p-6 border border-slate-200 shadow-sm">
                 <div className="flex items-center gap-1.5 mb-4">
@@ -494,7 +484,7 @@ const ComplianceResult: React.FC<Props> = ({ result, specs, onOpenDictionary }) 
                       <HelpCircle size={12} className="text-slate-300" />
                       <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-64 p-3 bg-slate-900 text-white text-[10px] font-medium rounded-xl opacity-0 group-hover:opacity-100 transition-all pointer-events-none z-50 shadow-xl leading-relaxed">
                           <span className="block font-black text-coral-400 mb-1 uppercase tracking-wider">Segurança Operacional</span>
-                          Esta declaração alerta a tripulação (via NOTOC) sobre a presença de baterias e orienta os procedimentos específicos de combate a incêndio em caso de emergência.
+                          Esta declaração alerta a tripulação sobre a presença de baterias e orienta os procedimentos de emergência.
                           <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-slate-900"></div>
                       </div>
                   </div>
@@ -512,7 +502,6 @@ const ComplianceResult: React.FC<Props> = ({ result, specs, onOpenDictionary }) 
               </div>
             )}
             
-            {/* Global Warning Note */}
             <div className="bg-indigo-900 rounded-[2rem] p-6 text-white text-[10px] font-black leading-relaxed shadow-lg print:hidden">
                <div className="flex items-center gap-2 mb-3">
                   <Globe size={16} className="text-coral-400" />
@@ -524,7 +513,6 @@ const ComplianceResult: React.FC<Props> = ({ result, specs, onOpenDictionary }) 
         </div>
       </div>
       
-      {/* Visual buffer for floating buttons */}
       <div className="h-12 print:hidden"></div>
     </div>
   );

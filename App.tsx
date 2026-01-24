@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Battery, Zap, Settings, Plane, LayoutGrid, LayoutList, Smartphone, Laptop, Disc, AlertCircle, Info, Layers, Package, Grid3X3, Box, Check, X, Watch, Key, HeartPulse, CreditCard, BatteryMedium, Plug, Radio, Search, Sparkles, Loader2, ShieldOff, Thermometer } from 'lucide-react';
+import { Battery, Zap, Settings, Plane, LayoutGrid, LayoutList, Smartphone, Laptop, Disc, AlertCircle, Info, Layers, Package, Grid3X3, Box, Check, X, Watch, Key, HeartPulse, CreditCard, BatteryMedium, Plug, Radio, Search, Sparkles, Loader2, ShieldOff, Thermometer, Cpu } from 'lucide-react';
 import { BatteryType, Configuration, BatterySpecs, CalculationResult, Language } from './types';
 import { calculateCompliance } from './utils/iataCalculator';
 import ComplianceResult from './components/ComplianceResult';
@@ -174,12 +174,23 @@ export function App() {
         setUnitsPerPackage('4');
         setIsConsolidated(false);
         setInnerPackageHasLabel(true);
+    } else if (name === 'cr_board') {
+        setBatteryType(BatteryType.LI_METAL);
+        setConfig(Configuration.CONTAINED_IN);
+        setStructure('cell');
+        setVoltage('3.0');
+        setCapacity('230'); // Typical CR2032 on Motherboards
+        setCapacityUnit('mAh');
+        setPackageCount('1');
+        setUnitsPerPackage('1');
+        setIsConsolidated(false);
+        setInnerPackageHasLabel(false);
     } else if (name === 'datalogger') {
         setBatteryType(BatteryType.LI_METAL);
         setConfig(Configuration.CONTAINED_IN);
         setStructure('cell');
         setVoltage('3.0');
-        setCapacity('1000'); // Typical Coin Cell or AA Lithium
+        setCapacity('1000'); 
         setCapacityUnit('mAh');
         setPackageCount('1');
         setUnitsPerPackage('1');
@@ -319,7 +330,8 @@ export function App() {
               ];
           case BatteryType.LI_METAL:
               return [
-                { id: 'datalogger', icon: Thermometer, label: 'Data Logger' },
+                { id: 'cr123', icon: Battery, label: 'CR123 / Photo' },
+                { id: 'cr_board', icon: Cpu, label: 'CR Coin (Placa)' },
                 { id: 'watch', icon: Watch, label: 'Relógio' },
                 { id: 'keyfob', icon: Key, label: 'Chave Carro' },
                 { id: 'aed', icon: HeartPulse, label: 'DEA (Médico)' }

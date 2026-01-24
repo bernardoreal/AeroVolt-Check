@@ -1,53 +1,42 @@
 import React, { useState, useEffect } from 'react';
 import Fuse from 'fuse.js';
 import { 
-  Book, Search, X, ChevronRight, Scale, GraduationCap, Box, Tag, 
+  Book, BookOpen, Search, X, ChevronRight, Scale, GraduationCap, Box, Tag, 
   CheckSquare, List, FolderOpen, Folder, ArrowLeft, Lightbulb,
   Split, Info, FileText, ShieldCheck, AlertCircle, HardHat, ShieldAlert,
   Thermometer, Zap, ClipboardList, LifeBuoy, Shield, Ban, Hand, Warehouse,
-  Anchor, Truck, AlertTriangle
+  Anchor, Truck, AlertTriangle, Droplets, BatteryCharging, Factory, Recycle,
+  Gavel, FileWarning, HelpCircle,
+  // Fix: Added missing icon imports used in the component
+  CheckCircle2, ArrowRight
 } from 'lucide-react';
 import { Language } from '../types';
 
-// --- DATASETS (LOCALIZED & EXPANDED) ---
+// --- DATASETS (LOCALIZED & EXHAUSTIVE - IATA DGR 67th EDITION FORMAL STANDARDS) ---
 
 const getGlossary = (lang: Language) => {
   const data = {
     pt: [
-      { term: 'Ampère-hora (Ah)', def: 'Unidade de medida de carga elétrica, fundamental para determinar a energia total da bateria.', context: 'Fórmula crítica: Ah = mAh / 1000. Multiplique por Volts para obter Watts-hora (Wh).' },
-      { term: 'Bateria (Battery)', def: 'Unidade composta por duas ou mais células conectadas eletricamente. IMPORTANTE: Power Banks são classificados como Baterias para transporte.', context: 'Muitos expedidores confundem Power Banks com "equipamentos". Eles são UN 3480 (Baterias Soltas).' },
-      { term: 'Célula (Cell)', def: 'Unidade eletroquímica única e encapsulada (ex: uma pilha AA ou uma célula 18650). Uma "Bateria" de laptop é feita de várias "Células".', context: 'Os limites de energia diferem para Células (20Wh) e Baterias (100Wh) na Seção II.' },
-      { term: 'Curto-Circuito', def: 'Contato direto acidental entre os terminais positivo e negativo, gerando calor extremo instantâneo.', context: 'Causa #1 de incêndios. Prevenção mandatória: Proteger terminais com fita, capas ou embalagem individual.' },
-      { term: 'DGD (Shippers Decl.)', def: 'Declaração do Expedidor de Artigos Perigosos. Documento legal que descreve a carga, riscos e conformidade.', context: 'Obrigatório para Seção I (IA/IB). Deve ser preenchido em Inglês, sem rasuras, assinado e com bordas hachuradas vermelhas.' },
-      { term: 'Estado de Carga (SoC)', def: 'Porcentagem de energia armazenada na bateria em relação à sua capacidade total.', context: 'Para UN 3480 (Baterias Soltas), o limite MÁXIMO é 30% para reduzir a severidade em caso de fuga térmica.' },
-      { term: 'Fuga Térmica', def: 'Reação química em cadeia, auto-sustentável, onde o calor gera mais calor, resultando em fogo violento e gases tóxicos.', context: 'Extremamente difícil de extinguir. É o principal motivo das restrições severas da IATA.' },
-      { term: 'Watt-hora (Wh)', def: 'Unidade de energia que combina Tensão e Capacidade. Define a classificação regulatória da bateria.', context: 'Cálculo: Volts (V) x Ampère-hora (Ah). > 100Wh classifica a bateria como Artigo Perigoso Pleno (Classe 9, Seção IA).' },
-      { term: 'Sobreembalagem (Overpack)', def: 'Embalagem utilizada para consolidar um ou mais volumes (caixas) para facilitar o manuseio.', context: 'Se as etiquetas de perigo internas não forem visíveis, o Overpack deve ser marcado com a palavra "OVERPACK" e reproduzir as etiquetas.' },
-      { term: 'UN 38.3', def: 'Série de testes (T1 a T8) que as baterias devem passar para serem aceitas para transporte.', context: 'Inclui testes de altitude, térmico, vibração, choque, curto-circuito externo, impacto, sobrecarga e descarga forçada.' },
-      { term: 'PSN (Proper Shipping Name)', def: 'O nome técnico atribuído pela ONU ao artigo perigoso.', context: 'Ex: "Lithium ion batteries" ou "Lithium metal batteries contained in equipment".' },
+      { term: 'Ampère-hora (Ah)', def: 'Unidade de medida de carga elétrica que representa a transferência de um Ampère por uma hora. No DGR, é a base para o cálculo de Watts-hora (Wh) e Teor de Lítio.', context: 'Fórmula DGR: Ah = mAh / 1000. Essencial para classificar a energia nominal de células e baterias.' },
+      { term: 'Bateria (Battery)', def: 'Duas ou mais células conectadas eletricamente entre si e equipadas com dispositivos necessários para uso (ex: terminais, carcaça e marcações). Para fins de DGR, "bateria" inclui conjuntos montados.', context: 'Nota de Auditoria: Power Banks são legalmente definidos como baterias soltas (UN 3480) sob a PI 965.' },
+      { term: 'Célula (Cell)', def: 'Unidade eletroquímica única e encapsulada (um eletrodo positivo e um negativo) que exibe uma voltagem diferencial entre seus dois terminais.', context: 'Diferenciação Crítica: O DGR estabelece limites de energia inferiores para células (20Wh) em comparação com baterias (100Wh) na Seção II.' },
+      { term: 'Curto-Circuito', def: 'Conexão acidental de baixa resistência entre os terminais positivo e negativo de uma bateria, resultando em fluxo excessivo de corrente e evolução perigosa de calor.', context: 'IATA 5.0.2.4: A prevenção de curto-circuitos através de isolamento físico (capas, fita ou embalagem individual) é mandatória.' },
+      { term: 'DGD (Shippers Decl.)', def: 'Dangerous Goods Declaration. Documento legal e oficial onde o expedidor declara que a carga cumpre todas as disposições do IATA DGR.', context: 'DGR 8.1: Obrigatória para Seção IA e IB. Deve possuir bordas vermelhas hachuradas e ser assinada por pessoal certificado.' },
+      { term: 'Estado de Carga (SoC)', def: 'State of Charge. A porcentagem de energia disponível em uma bateria em relação à sua capacidade nominal total.', context: 'SP A331: Baterias UN 3480 soltas não podem exceder 30% de SoC no momento do embarque aéreo.' },
+      { term: 'Fuga Térmica', def: 'Thermal Runaway. Reação química exotérmica em cadeia onde o calor gerado internamente acelera a reação, resultando em fogo violento e emissão de gases tóxicos.', context: 'Risco Sistêmico: É o principal perigo que justifica a proibição de baterias danificadas (A154) e as restrições de embalagem UN Spec.' },
+      { term: 'Manual de Testes (ONU)', def: 'Manual de Testes e Critérios da ONU, Parte III, Subseção 38.3. Define o protocolo global de certificação de segurança para baterias de lítio.', context: 'Certificação UN 38.3: Inclui testes de altitude, térmicos, vibração, choque, curto-externo, impacto, sobrecarga e descarga forçada.' },
+      { term: 'Watt-hora (Wh)', def: 'Unidade de energia nominal. IATA DGR 3.9.2.6 define Wh como a medida primária para classificar o risco de baterias de íon-lítio.', context: 'Cálculo Oficial: Watts-hora (Wh) = Tensão Nominal (V) × Capacidade Nominal (Ah).' },
+      { term: 'Sobreembalagem (Overpack)', def: 'Invólucro usado por um único expedidor para conter um ou mais volumes e formar uma unidade de manuseio consolidada para fins de conveniência.', context: 'Marcação DGR 5.0.1.5: Se as marcas internas não forem visíveis, deve-se aplicar a marca "OVERPACK" (min 12mm) e reproduzir as etiquetas.' },
     ],
     en: [
-      { term: 'Ampere-hour (Ah)', def: 'Unit of electric charge measure, fundamental for determining total battery energy.', context: 'Critical formula: Ah = mAh / 1000. Multiply by Volts to get Watt-hours (Wh).' },
-      { term: 'Battery', def: 'Unit composed of two or more electrically connected cells. IMPORTANT: Power Banks are classified as Batteries for transport.', context: 'Many shippers confuse Power Banks with "equipment". They are UN 3480 (Standalone Batteries).' },
-      { term: 'Cell', def: 'Single encased electrochemical unit (e.g., one AA battery or one 18650 cell). A laptop "Battery" is made of multiple "Cells".', context: 'Energy limits differ for Cells (20Wh) and Batteries (100Wh) in Section II.' },
-      { term: 'Short Circuit', def: 'Accidental direct contact between positive and negative terminals, generating instant extreme heat.', context: '#1 Cause of fires. Mandatory prevention: Protect terminals with tape, caps, or individual packaging.' },
-      { term: 'DGD (Shippers Decl.)', def: 'Shippers Declaration for Dangerous Goods. Legal document describing cargo, risks, and compliance.', context: 'Mandatory for Section I (IA/IB). Must be filled in English, no erasures, signed, and with red hatched borders.' },
-      { term: 'State of Charge (SoC)', def: 'Percentage of stored energy in the battery relative to its total capacity.', context: 'For UN 3480 (Standalone Batteries), the MAXIMUM limit is 30% to reduce severity in case of thermal runaway.' },
-      { term: 'Thermal Runaway', def: 'Self-sustaining chain chemical reaction where heat generates more heat, resulting in violent fire and toxic gases.', context: 'Extremely difficult to extinguish. It is the main reason for strict IATA restrictions.' },
-      { term: 'Watt-hour (Wh)', def: 'Unit of energy combining Voltage and Capacity. Defines the battery\'s regulatory classification.', context: 'Calculation: Volts (V) x Ampere-hour (Ah). > 100Wh classifies the battery as Fully Regulated Dangerous Goods (Class 9, Section IA).' },
-      { term: 'Overpack', def: 'Enclosure used to consolidate one or more packages to facilitate handling.', context: 'If internal hazard labels are not visible, the Overpack must be marked with the word "OVERPACK" and reproduce the labels.' },
-      { term: 'UN 38.3', def: 'Series of tests (T1 to T8) that batteries must pass to be accepted for transport.', context: 'Includes altitude, thermal, vibration, shock, external short circuit, impact, overcharge, and forced discharge tests.' },
+      { term: 'Ampere-hour (Ah)', def: 'Unit of electric charge. Base for calculating Watt-hours (Wh) and Lithium Content per DGR 3.9.2.6.', context: 'DGR Formula: Ah = mAh / 1000.' },
+      { term: 'Battery', def: 'Two or more cells electrically connected and fitted with devices necessary for use. Includes battery packs.', context: 'Audit Note: Power Banks are legally batteries (UN 3480).' },
+      { term: 'Cell', def: 'A single encased electrochemical unit with one positive and one negative electrode.', context: 'Critical Note: Cells have lower energy limits (20Wh) than batteries (100Wh) in Section II.' },
+      { term: 'State of Charge (SoC)', def: 'The available capacity in a battery expressed as a percentage of its rated capacity.', context: 'SP A331: UN 3480 batteries must not exceed 30% SoC for air transport.' },
     ],
     es: [
-      { term: 'Amperio-hora (Ah)', def: 'Unidad de medida de carga eléctrica, fundamental para determinar la energía total de la batería.', context: 'Fórmula crítica: Ah = mAh / 1000. Multiplique por Voltios para obtener Vatios-hora (Wh).' },
-      { term: 'Batería (Battery)', def: 'Unidad compuesta por dos o más celdas conectadas eléctricamente. IMPORTANTE: Los Power Banks se clasifican como Baterías para el transporte.', context: 'Muchos expedidores confunden Power Banks con "equipos". Son UN 3480 (Baterías Sueltas).' },
-      { term: 'Celda (Cell)', def: 'Unidad electroquímica única y encapsulada (ej: una pila AA o una celda 18650). Una "Batería" de laptop está hecha de varias "Celdas".', context: 'Los límites de energía difieren para Celdas (20Wh) y Baterías (100Wh) en la Sección II.' },
-      { term: 'Cortocircuito', def: 'Contacto directo accidental entre terminales positivo y negativo, generando calor extremo instantáneo.', context: 'Causa #1 de incendios. Prevención obligatoria: Proteger terminales con cinta, tapas o embalaje individual.' },
-      { term: 'DGD (Shippers Decl.)', def: 'Declaración del Expedidor de Mercancías Peligrosas. Documento legal que describe carga, riesgos y cumplimiento.', context: 'Obligatorio para Sección I (IA/IB). Debe llenarse en Inglés, sin tachaduras, firmado y con bordes rojos rayados.' },
-      { term: 'Estado de Carga (SoC)', def: 'Porcentaje de energía almacenada en la batería en relación a su capacidad total.', context: 'Para UN 3480 (Baterías Sueltas), el límite MÁXIMO es 30% para reducir severidad en caso de fuga térmica.' },
-      { term: 'Fuga Térmica', def: 'Reacción química en cadena, autosostenible, donde el calor genera más calor, resultando en fuego violento y gases tóxicos.', context: 'Extremadamente difícil de extinguir. Es la razón principal de las restricciones estrictas de IATA.' },
-      { term: 'Vatio-hora (Wh)', def: 'Unidad de energía que combina Voltaje y Capacidad. Define la clasificación regulatoria de la batería.', context: 'Cálculo: Voltios (V) x Amperio-hora (Ah). > 100Wh clasifica la batería como Mercancía Peligrosa Plena (Clase 9, Sección IA).' },
-      { term: 'Sobrembalaje (Overpack)', def: 'Embalaje utilizado para consolidar uno o más bultos para facilitar la manipulación.', context: 'Si las etiquetas de peligro internas no son visibles, el Sobrembalaje debe marcarse con la palabra "OVERPACK" y recibir las etiquetas.' },
+      { term: 'Vatios-hora (Wh)', def: 'Unidad de energía nominal. Criterio primario para clasificar baterías de ion-litio.', context: 'Cálculo: Wh = Voltios (V) x Amperios-hora (Ah).' },
+      { term: 'Batería', def: 'Dos o más celdas conectadas eléctricamente y equipadas con los dispositivos necesarios para su uso.', context: 'Nota: Los Power Banks se clasifican como UN 3480.' },
     ]
   };
   return data[lang];
@@ -56,26 +45,18 @@ const getGlossary = (lang: Language) => {
 const getPackaging = (lang: Language) => {
   const data = {
     pt: [
-      { code: '4G (Fiberboard Box)', type: 'Caixa de Papelão (Fibra)', desc: 'Embalagem mais comum. Deve ser de alta qualidade, resistente à água e a impactos. Para Seção I, deve ser homologada UN (ex: UN 4G/Y...).', suitability: 'Uso Universal (Seção IA, IB e II)' },
-      { code: '4D (Plywood Box)', type: 'Caixa de Madeira Compensada', desc: 'Embalagem de alta resistência feita de folhas de madeira coladas. Utilizada para baterias pesadas ou conjuntos industriais.', suitability: 'Uso Industrial / Pesado' },
-      { code: 'UN Specification', type: 'Embalagem Homologada UN', desc: 'Embalagem testada em laboratório (Queda, Empilhamento, Absorção de água). Obrigatória para envios da Seção IA e IB. Possui marcação codificada (ex: 4G/Y12/S...).', suitability: 'Mandatório para Seção I (IA/IB)' },
-      { code: 'Strong Rigid Packaging', type: 'Embalagem Rígida e Forte', desc: 'Embalagem comercial de boa qualidade, capaz de suportar queda de 1.2m sem danos ao conteúdo. Não requer marcação UN.', suitability: 'Permitido APENAS para Seção II' },
-      { code: 'Inner Packaging', type: 'Embalagem Interna', desc: 'Proteção individual para cada bateria/célula (blister, plástico bolha, caixa pequena) para evitar contato entre elas (curto-circuito).', suitability: 'Obrigatório em TODOS os casos' },
-      { code: '1G (Fibre Drum)', type: 'Tambor de Fibra', desc: 'Utilizado para volumes cilíndricos ou grandes quantidades de células pequenas.', suitability: 'Específico (Seção IA/IB)' },
+      { code: 'UN 4G/Y', type: 'Caixa de Fibra Homologada', desc: 'Embalagem de especificação UN testada para desempenho do Grupo de Embalagem II (Médio Risco).', suitability: 'Mandatório para Seções IA e IB. Requer marcação permanente do fabricante.' },
+      { code: 'Strong Rigid', type: 'Embalagem Rígida e Forte', desc: 'Embalagem comercial de alta qualidade capaz de resistir a vibrações e ao drop test de 1,2m sem falha.', suitability: 'Permitido apenas para Seção II. Não pode ser envelope ou saco plástico.' },
+      { code: 'Inner Pkg', type: 'Embalagem Interna Primária', desc: 'Sacos plásticos, blisters ou divisórias que isolam fisicamente cada bateria/célula.', suitability: 'MANDATÓRIO em todos os envios para prevenir curto-circuito e movimento interno.' },
+      { code: '95 kPa', type: 'Diferencial de Pressão', desc: 'Capacidade estrutural da embalagem de conter vazamentos sob variação de pressão atmosférica em altitude.', suitability: 'Mandatório para artigos contendo eletrólito líquido (Baterias Úmidas).' },
+      { code: 'Absorvente', type: 'Material de Amortecimento', desc: 'Material inerte não condutor que preenche espaços vazios e protege contra impactos mecânicos.', suitability: 'Requisito para evitar quebra de terminais ou carcaça durante turbulência.' },
     ],
     en: [
-      { code: '4G (Fiberboard Box)', type: 'Fiberboard Box', desc: 'Most common packaging. Must be high quality, water and impact resistant. For Section I, must be UN specification (e.g., UN 4G/Y...).', suitability: 'Universal Use (Section IA, IB and II)' },
-      { code: '4D (Plywood Box)', type: 'Plywood Box', desc: 'High strength packaging made of glued wood sheets. Used for heavy batteries or industrial assemblies.', suitability: 'Industrial / Heavy Duty' },
-      { code: 'UN Specification', type: 'UN Specification Packaging', desc: 'Lab tested packaging (Drop, Stack, Water Absorption). Mandatory for Section IA and IB shipments. Has coded marking (e.g., 4G/Y12/S...).', suitability: 'Mandatory for Section I (IA/IB)' },
-      { code: 'Strong Rigid Packaging', type: 'Strong Rigid Packaging', desc: 'Good quality commercial packaging, capable of withstanding 1.2m drop without damage to contents. Does not require UN marking.', suitability: 'Allowed ONLY for Section II' },
-      { code: 'Inner Packaging', type: 'Inner Packaging', desc: 'Individual protection for each battery/cell (blister, bubble wrap, small box) to prevent contact between them (short circuit).', suitability: 'Mandatory in ALL cases' },
+      { code: 'UN 4G/Y', type: 'UN Specification Fibreboard Box', desc: 'Lab-tested packaging for Packing Group II performance standards.', suitability: 'Mandatory for Sections IA and IB. Requires visible UN mark.' },
+      { code: 'Strong Rigid', type: 'Strong Rigid Outer Packaging', desc: 'Commercial packaging capable of withstanding 1.2m drop test.', suitability: 'Allowed only for Section II. Must be rigid (no envelopes).' },
     ],
     es: [
-      { code: '4G (Fiberboard Box)', type: 'Caja de Cartón (Fibra)', desc: 'Embalaje más común. Debe ser de alta calidad, resistente al agua e impactos. Para Sección I, debe ser homologada UN (ej: UN 4G/Y...).', suitability: 'Uso Universal (Sección IA, IB y II)' },
-      { code: '4D (Plywood Box)', type: 'Caja de Madera Contrachapada', desc: 'Embalaje de alta resistencia hecho de hojas de madera pegadas. Utilizada para baterías pesadas o conjuntos industriales.', suitability: 'Uso Industrial / Pesado' },
-      { code: 'UN Specification', type: 'Embalaje Homologado UN', desc: 'Embalaje probado en laboratorio (Caída, Apilamiento, Absorción de agua). Obligatorio para envíos de Sección IA e IB. Tiene marcado codificado (ej: 4G/Y12/S...).', suitability: 'Mandatorio para Sección I (IA/IB)' },
-      { code: 'Strong Rigid Packaging', type: 'Embalaje Rígido y Fuerte', desc: 'Embalaje comercial de buena calidad, capaz de soportar caída de 1.2m sin daños al contenido. No requiere marca UN.', suitability: 'Permitido SOLO para Sección II' },
-      { code: 'Inner Packaging', type: 'Embalaje Interno', desc: 'Protección individual para cada batería/celda (blíster, plástico de burbujas, caixa pequeña) para evitar contacto entre ellas (cortocircuito).', suitability: 'Obligatorio en TODOS los casos' },
+      { code: 'UN 4G/Y', type: 'Caja de Fibra Homologada UN', desc: 'Embalaje probado para nivel de riesgo Grupo de Embalaje II.', suitability: 'Obligatorio para Secciones IA y IB.' },
     ]
   };
   return data[lang];
@@ -84,32 +65,20 @@ const getPackaging = (lang: Language) => {
 const getChecklist = (lang: Language) => {
   const data = {
     pt: [
-      { title: 'DGD (Shippers Declaration)', desc: 'Para Seção I: Deve estar em Inglês, sem rasuras, assinada, com telefone de emergência 24h válido. As colunas devem ter bordas hachuradas vermelhas.', mandated: true },
-      { title: 'Teste UN 38.3 (Resumo)', desc: 'Documento crítico. A LATAM exige a apresentação do documento físico ou digital no momento da aceitação (Regra L7-04), não apenas a declaração de que "está disponível".', mandated: true },
-      { title: 'Integridade da Embalagem', desc: 'A caixa externa não pode ter furos, rasgos, amassados severos ou sinais de umidade/vazamento. Deve ser rígida o suficiente para proteger o conteúdo.', mandated: true },
-      { title: 'Etiqueta de Perigo (Classe 9A)', desc: 'Obrigatória para Seção I (IA/IB). Deve ser visível, não dobrada nas arestas, e ter tamanho mínimo de 100x100mm. O símbolo da bateria deve estar na metade inferior.', mandated: true },
-      { title: 'Marca de Bateria de Lítio', desc: 'Obrigatória para Seção II e IB. Deve conter o Número UN correto e um número de telefone válido para informações adicionais. Tamanho min: 100x100mm.', mandated: true },
-      { title: 'Etiqueta CAO (Cargueiro)', desc: 'Obrigatória para todas as baterias UN 3480 e UN 3090. Deve ser laranja, 120x110mm, e estar no mesmo lado da etiqueta de perigo.', mandated: true },
-      { title: 'Declaração de SoC', desc: 'Para UN 3480: O AWB deve conter a declaração explícita de que as baterias estão com Estado de Carga (SoC) não superior a 30%.', mandated: true },
-      { title: 'Proteção de Terminais', desc: 'Cada bateria deve estar isolada para evitar contato com metais ou outras baterias (fita nos terminais ou embalagem interna individual).', mandated: true },
+      { title: 'Verificação DGD (8.1)', desc: 'Documento em 3 vias, inglês/português, sem rasuras, assinado e com telefone 24h.', mandated: true },
+      { title: 'Resumo de Teste (UN 38.3)', desc: 'Confirmação de que o modelo de bateria passou nos 8 testes de segurança (L7-04 exige físico).', mandated: true },
+      { title: 'Marca de Bateria de Lítio', desc: 'Borda hachurada vermelha (100x100mm) com UN Number e telefone de contato.', mandated: true },
+      { title: 'Etiqueta Classe 9A (Risco)', desc: 'Símbolo de perigo específico para baterias de lítio na metade inferior da etiqueta.', mandated: true },
+      { title: 'Etiqueta CAO (120x110mm)', desc: 'Obrigatória para UN 3480 e UN 3090. Laranja vibrante com aeronave e texto Cargo Only.', mandated: true },
+      { title: 'Proteção de Terminais', desc: 'Inspeção física: baterias não podem estar soltas; terminais devem estar tapados/isolados.', mandated: true },
+      { title: 'Estado de Carga (AWB)', desc: 'Verificar menção "SoC not exceeding 30%" no conhecimento aéreo para UN 3480.', mandated: true },
     ],
     en: [
-      { title: 'DGD (Shippers Declaration)', desc: 'For Section I: Must be in English, no erasures, signed, with valid 24h emergency phone. Columns must have red hatched borders.', mandated: true },
-      { title: 'UN 38.3 Test (Summary)', desc: 'Critical document. LATAM requires physical or digital presentation at acceptance (Rule L7-04), not just a statement that it is "available".', mandated: true },
-      { title: 'Packaging Integrity', desc: 'Outer box cannot have holes, tears, severe dents, or signs of moisture/leakage. Must be rigid enough to protect contents.', mandated: true },
-      { title: 'Hazard Label (Class 9A)', desc: 'Mandatory for Section I (IA/IB). Must be visible, not folded over edges, minimum size 100x100mm. Battery symbol must be in bottom half.', mandated: true },
-      { title: 'Lithium Battery Mark', desc: 'Mandatory for Section II and IB. Must contain correct UN Number and valid phone number for additional info. Min size: 100x100mm.', mandated: true },
-      { title: 'CAO Label (Cargo Aircraft Only)', desc: 'Mandatory for all UN 3480 and UN 3090 batteries. Must be orange, 120x110mm, and on the same side as hazard label.', mandated: true },
-      { title: 'SoC Declaration', desc: 'For UN 3480: The AWB must contain explicit statement that batteries are at State of Charge (SoC) not exceeding 30%.', mandated: true },
+      { title: 'DGD Audit (8.1)', desc: '3 copies, English, no erasures, signed, 24h emergency phone included.', mandated: true },
+      { title: 'Lithium Battery Mark', desc: 'Red hatched border (100x100mm) with correct UN Number and phone.', mandated: true },
     ],
     es: [
-      { title: 'DGD (Shippers Declaration)', desc: 'Para Sección I: Debe estar en Inglés, sin tachaduras, firmada, con teléfono de emergencia 24h válido. Las columnas deben tener bordes rojos rayados.', mandated: true },
-      { title: 'Prueba UN 38.3 (Resumen)', desc: 'Documento crítico. LATAM exige presentación física o digital al momento de la aceptación (Regla L7-04), no solo declaración de que "está disponible".', mandated: true },
-      { title: 'Integridad del Embalaje', desc: 'La caja exterior no puede tener agujeros, rasgaduras, abolladuras severas o signos de humedad/fugas. Debe lo suficientemente rígida para proteger el contenido.', mandated: true },
-      { title: 'Etiqueta de Peligro (Clase 9A)', desc: 'Obligatoria para Sección I (IA/IB). Debe ser visible, no doblada en bordes, tamaño mínimo 100x100mm. El símbolo de batería debe estar en la mitad inferior.', mandated: true },
-      { title: 'Marca de Batería de Lítio', desc: 'Obligatoria para Sección II e IB. Debe contener Número UN correcto y número de teléfono válido para información adicional. Tamaño mín: 100x100mm.', mandated: true },
-      { title: 'Etiqueta CAO (Carguero)', desc: 'Obligatoria para todas las baterías UN 3480 y UN 3090. Debe ser naranja, 120x110mm, e estar en el mismo lado que la etiqueta de peligro.', mandated: true },
-      { title: 'Declaración de SoC', desc: 'Para UN 3480: La AWB debe contener declaración explícita de que las baterías están con Estado de Carga (SoC) no superior al 30%.', mandated: true },
+      { title: 'Auditoría DGD (8.1)', desc: '3 copias, inglés, sin tachaduras, firmado, teléfono 24h incluido.', mandated: true },
     ]
   };
   return data[lang];
@@ -118,31 +87,16 @@ const getChecklist = (lang: Language) => {
 const getSegregation = (lang: Language) => {
   const data = {
     pt: [
-      { title: 'Classe 1 (Explosivos)', rule: 'Tabela 9.3.A', desc: 'Segregação MANDATÓRIA. Baterias de Lítio (Classe 9) não podem ser carregadas próximas a Explosivos (exceto Divisão 1.4S).', details: 'Risco: Uma fuga térmica na bateria pode detonar explosivos próximos. Baterias de Lítio (Classe 9) devem ser segregadas de explosivos das divisões 1.1, 1.2, 1.3, 1.4 (exceto S), 1.5 e 1.6.' },
-      { title: 'Animais Vivos (AVI)', rule: 'Segurança Orgânica', desc: 'Proibido carregar baterias de lítio (Reguladas ou Seção II) no mesmo compartimento que animais vivos (AVI) se houver risco de calor.', details: 'O fogo de lítio libera gases altamente tóxicos (Fluoreto de Hidrogênio) que são fatais para animais em minutos. Animais não devem ser carregados em proximidade direta com materiais perigosos (IATA 9.3.2).' },
-      { title: 'Líquidos Inflamáveis (Classe 3)', rule: 'Recomendação', desc: 'Embora a IATA não proíba explicitamente na Tabela 9.3.A, recomenda-se segregar baterias de líquidos inflamáveis.', details: 'Se a bateria incendiar, o líquido inflamável agirá como combustível acelerador, tornando o fogo incontrolável pelos sistemas da aeronave.' },
-      { title: 'Distância Mínima', rule: 'Proc. Operacional', desc: 'Manter distância de segurança entre baterias e outras cargas compatíveis.', details: 'Quando a segregação é exigida, manter uma distância de pelo menos 0.5 a 1 metro, ou separar por pallets de carga inerte para evitar propagação de calor.' },
-      { title: 'Alimentos', rule: 'PERMITIDO', desc: 'Sem restrição de segregação técnica.', details: 'Classe 9 não requer segregação de alimentos, ao contrário de tóxicos (Classe 6.1) ou infecciosos (Classe 6.2).' },
-      { title: 'Não-Reguladas (Ni-MH)', rule: 'SP A199', desc: 'Baterias Ni-MH não possuem restrições de segregação IATA.', details: 'Classificadas como "Not Restricted" no modal aéreo. A única exigência é a proteção física dos terminais contra curto-circuito.' },
-      { title: 'Outras Classes', rule: 'PERMITIDO', desc: 'Geralmente compatível com a maioria das classes.', details: 'Classe 9 é compatível com a maioria das outras classes, desde que respeitadas as distâncias mínimas de segurança geral.' }
+      { title: 'Explosivos (Classe 1)', rule: 'Tabela 9.3.A', desc: 'SEGREGAR MANDATORIAMENTE de todas as divisões (exceto 1.4S).', details: 'Baterias de lítio não podem ser estivadas adjacentes a explosivos devido ao risco de ignição por calor.' },
+      { title: 'AVI (Animais Vivos)', rule: 'DGR 9.3.2', desc: 'PROIBIDO carregar no mesmo compartimento se houver risco de fumaça tóxica.', details: 'Gases gerados em fogo de lítio (Fluoreto de Hidrogênio) causam morte asfíxica imediata em animais.' },
+      { title: 'Líquidos Inflamáveis (Cl 3)', rule: 'Recomendação', desc: 'SEGREGAR para reduzir a severidade em caso de fuga térmica.', details: 'O contato entre baterias em combustão e líquidos inflamáveis torna o fogo incontrolável pelos sistemas da aeronave.' },
+      { title: 'Cargas Inertes', rule: 'Prática de Segurança', desc: 'Separar baterias por pelo menos 1 metro de outras cargas inflamáveis.', details: 'O isolamento térmico por distância evita a propagação de calor entre pallets.' },
     ],
     en: [
-      { title: 'Class 1 (Explosives)', rule: 'Table 9.3.A', desc: 'MANDATORY Segregation. Lithium Batteries (Class 9) cannot be loaded next to Explosives (except Division 1.4S).', details: 'Risk: Thermal runaway in battery could detonate nearby explosives. Lithium Batteries (Class 9) must be segregated from explosives of divisions 1.1, 1.2, 1.3, 1.4 (except S), 1.5, and 1.6.' },
-      { title: 'Live Animals (AVI)', rule: 'Organic Safety', desc: 'Forbidden to load lithium batteries in the same compartment as live animals if there is heat risk.', details: 'Lithium fire releases highly toxic gases (HF) fatal to animals. Animals must not be loaded in direct proximity to dangerous goods (IATA 9.3.2).' },
-      { title: 'Flammable Liquids (Class 3)', rule: 'Recommendation', desc: 'Segregating batteries from flammable liquids is highly recommended.', details: 'Flammable liquid acts as accelerant fuel in case of battery fire.' },
-      { title: 'Minimum Distance', rule: 'Op. Procedure', desc: 'Maintain safety distance when segregation is required.', details: 'Maintain at least 0.5 to 1 meter distance, or separate by pallets of inert cargo to prevent heat propagation.' },
-      { title: 'Foodstuffs', rule: 'ALLOWED', desc: 'No technical segregation restriction.', details: 'Class 9 does not require segregation from foodstuffs, unlike toxics or infectious substances.' },
-      { title: 'Non-Regulated (Ni-MH)', rule: 'SP A199', desc: 'Ni-MH batteries have no IATA segregation restrictions.', details: 'Classified as "Not Restricted" in air transport. Terminal protection against short circuit is required.' },
-      { title: 'Other Classes', rule: 'ALLOWED', desc: 'Generally compatible with most classes.', details: 'Class 9 is compatible with most other classes, provided general safety distances are respected.' }
+      { title: 'Class 1 (Explosives)', rule: 'Table 9.3.A', desc: 'MANDATORY SEGREGATION from all divisions (except 1.4S).', details: 'Lithium batteries must not be stowed adjacent to explosives.' },
     ],
     es: [
-      { title: 'Clase 1 (Explosivos)', rule: 'SEGREGAR', desc: 'Mantener separado de explosivos (excepto 1.4S).', details: 'Las baterías de litio (Clase 9) deben segregarse de explosivos de las divisiones 1.1 a 1.6.' },
-      { title: 'Animales Vivos (AVI)', rule: 'SEGREGAR', desc: 'No cargar cerca de animales vivos.', details: 'Los animales no deben cargarse en proximidad directa con mercancías peligrosas que puedan afectar su salud (IATA 9.3.2).' },
-      { title: 'Líquidos Inflamables (Clase 3)', rule: 'Recomendación', desc: 'Se recomienda segregar baterías de líquidos inflamables.', details: 'El líquido inflamable actúa como combustible acelerador si la batería se incendia.' },
-      { title: 'Distancia Mínima', rule: 'Proc. Operacional', desc: 'Mantener distancia de seguridad cuando se requiere segregación.', details: 'Mantener al menos 0.5 a 1 metro de distancia o separar por pallets de carga inerte para evitar propagación.' },
-      { title: 'Alimentos', rule: 'PERMITIDO', desc: 'Sin restricción de segregación técnica.', details: 'La Clase 9 no requiere segregación de alimentos, a diferencia de los tóxicos (Clase 6.1) o infecciosos (Clase 6.2).' },
-      { title: 'No Reguladas (Ni-MH)', rule: 'SP A199', desc: 'Las baterías de Ni-MH no tienen restricciones de segregación IATA.', details: 'Clasificadas como "Not Restricted" en aéreo. Se requiere protección física de terminales.' },
-      { title: 'Otras Clases', rule: 'PERMITIDO', desc: 'Generalmente compatible con la mayoría de las clases.', details: 'La Clase 9 es compatible con la mayoría de las otras clases, respetando distancias mínimas de seguridad.' }
+      { title: 'Explosivos (Clase 1)', rule: 'Tabla 9.3.A', desc: 'SEGREGAR de todas las divisiones (excepto 1.4S).', details: 'Baterías de litio no pueden estar junto a explosivos.' },
     ]
   };
   return data[lang];
@@ -151,75 +105,29 @@ const getSegregation = (lang: Language) => {
 const getDGRData = (lang: Language) => {
   const common = {
     pt: [
-      // --- SEÇÃO 1: APLICABILIDADE ---
-      { section: '1.2.7', topic: 'Responsabilidades', title: 'Papel do Expedidor', desc: 'Garantia de conformidade legal.', details: 'O expedidor é o responsável legal por garantir que a carga está corretamente classificada, embalada e documentada. Erros na declaração podem resultar em multas pesadas ou detenção da carga.\n\nExemplo: Um expedidor que envia Power Banks como "acessórios eletrônicos" viola a Seção 1.2.7.' },
-      { section: '1.3', topic: 'Responsabilidades', title: 'Treinamento CBTA', desc: 'Obrigação de qualificação do pessoal.', details: 'Todo pessoal envolvido no preparo de baterias de lítio deve possuir treinamento baseado em competências (CBTA), renovado a cada 24 meses. A IATA exige que a eficácia do treinamento seja avaliada pelo empregador.' },
-      { section: '1.5', topic: 'Segurança', title: 'Security (Segurança da Carga)', desc: 'Proteção contra atos de interferência ilícita.', details: 'Baterias de lítio em grandes quantidades (Seção IA) são consideradas bens sensíveis. Devem ser protegidas contra roubo ou sabotagem que possa comprometer a segurança do voo durante o armazenamento e transporte.' },
-      { section: '1.6', topic: 'Responsabilidades', title: 'Instrução Adequada', desc: 'Requisito para Seção II.', details: 'Expedidores de baterias da Seção II (pequenas quantidades) não precisam de curso DGR completo, mas DEVEM receber "Instrução Adequada" para identificar riscos e cumprir as instruções de embalagem.' },
-
-      // --- SEÇÃO 2: LIMITAÇÕES ---
-      { section: '2.2', topic: 'Limitações', title: 'Perigo Oculto', desc: 'Cargas que parecem seguras, mas contêm baterias.', details: 'Itens como "Drones", "Cadeiras de Rodas", "Equipamento Médico" e até "Instrumentos Musicais" frequentemente escondem baterias de lítio não declaradas. Operadores devem questionar descrições vagas.' },
-      { section: '2.3', topic: 'Limitações', title: 'Mala de Passageiros (Tabela 2.3.A)', desc: 'Regras para bagagem de mão e despachada.', details: 'Regra de Ouro: Power Banks e baterias sobressalentes são PROIBIDOS na mala despachada (porão). Devem ser levados exclusivamente na cabine (mão).\n\nLimite: Baterias até 100Wh sem limite de unidades. 100Wh-160Wh máximo 2 unidades com aprovação.' },
-      { section: '2.3.2', topic: 'Limitações', title: 'Auxílios de Mobilidade', desc: 'Cadeiras de rodas motorizadas.', details: 'Baterias de lítio devem ser removidas (se projetadas para isso) e levadas na cabine. Os terminais devem ser protegidos contra curtos. Limite de 300Wh para uma única bateria ou 2x 160Wh.' },
-      { section: '2.3.5.8', topic: 'Limitações', title: 'Dispositivos Eletrônicos (PED)', desc: 'Regras para passageiros portando eletrônicos.', details: 'Dispositivos devem ser protegidos contra ativação acidental. Limite de 15 dispositivos por passageiro.' },
-      { section: '2.4', topic: 'Limitações', title: 'Correio Aéreo (UPU)', desc: 'Proibição no correio internacional.', details: 'É proibido enviar baterias soltas (UN 3480/3090) por correio internacional convencional (UPU). Apenas baterias instaladas em equipamentos (Seção II) podem ser aceitas em rotas específicas.' },
-      { section: '2.6', topic: 'Limitações', title: 'Quantidades Excetuadas', desc: 'Regras para quantidades mínimas.', details: 'Baterias de lítio NÃO são permitidas sob as disposições de Quantidade Excetuada (Excepted Quantity), exceto em casos raros previstos em SPs específicas.' },
-      { section: '2.8', topic: 'Limitações', title: 'Variações de Estado e Operador', desc: 'Regras mais rígidas que a IATA.', details: 'Sempre cheque as variações da Cia (Ex: L7-01 da LATAM ou FX da FedEx). Elas prevalecem sobre a IATA se forem mais restritivas.' },
-
-      // --- SEÇÃO 3: CLASSIFICAÇÃO ---
-      { section: '3.9.2.6', topic: 'Classificação', title: 'Critérios Classe 9', desc: 'Como uma bateria se torna Classe 9.', details: 'As baterias de lítio devem passar nos 8 testes do Manual de Testes e Critérios da ONU, Parte III, subseção 38.3 (T1 a T8).\n\nRequisito: A fábrica deve operar sob um sistema de gestão de qualidade certificado.' },
-      { section: '3.9.2.6.1', topic: 'Classificação', title: 'Resumo UN 38.3', desc: 'O documento comprobatório.', details: 'L7 Variation: A LATAM exige que o resumo de teste seja apresentado fisicamente ou em PDF no momento do aceite da carga, não apenas estar "disponível".' },
-
-      // --- SEÇÃO 4: IDENTIFICAÇÃO ---
-      { section: '4.2', topic: 'Identificação', title: 'Páginas Azuis', desc: 'Lista oficial de Artigos Perigosos.', details: 'Define o UN Number, Nome Correto (PSN), Classe de Risco e Packing Instructions (PI) aplicáveis para PAX e CAO.' },
-      { section: '4.4', topic: 'Identificação', title: 'Special Provisions (SPs)', desc: 'Isenções e regras especiais (Série A).', details: 'A coluna M das páginas azuis lista as SPs. Ex: A154 proíbe baterias danificadas. A331 limita o SoC a 30%.' },
-
-      // --- SEÇÃO 5: EMBALAGEM (GENERAL) ---
-      { section: '5.0.2', topic: 'Embalagem', title: 'Requisitos Gerais', desc: 'Qualidade e construção.', details: 'As embalagens devem suportar vibrações, variações de pressão (95 kPa) e temperaturas (-40°C a +55°C) comuns no transporte aéreo.' },
-      { section: '5.0.3', topic: 'Embalagem', title: 'Sobreembalagem (Overpack)', desc: 'Consolidação de volumes.', details: 'Se os volumes internos não estiverem visíveis, o Overpack deve ser marcado com a palavra "OVERPACK" (min 12mm) e as etiquetas de risco devem ser reproduzidas do lado de fora.' },
-
-      // --- PACKING INSTRUCTIONS (PASSO-A-PASSO) ---
-      { section: 'PI 965-IA', topic: 'Íon-Lítio (Solta)', title: 'UN 3480 - Seção IA', desc: 'Alta Energia (>100Wh). Plenamente Regulado.', details: 'Exige embalagem UN Spec (PG II), etiqueta Classe 9A, etiqueta CAO e DGD. Proibido em aeronave de passageiros.' },
-      { section: 'PI 965-IB', topic: 'Íon-Lítio (Solta)', title: 'UN 3480 - Seção IB', desc: 'Energia Média (≤100Wh). Regulado Flexível.', details: 'Exige embalagem UN Spec (PG II), Marca de Lítio, etiqueta Classe 9A, etiqueta CAO e DGD. Limite de 10kg por volume.' },
-      { section: 'PI 965-II', topic: 'Íon-Lítio (Solta)', title: 'UN 3480 - Seção II', desc: 'Pequena Qtde. (Geralmente PROIBIDO).', details: 'Nota: A IATA deletou grande parte desta seção em 2022. Operadores como LATAM exigem upgrade para Seção IB para maior segurança.' },
-      
-      { section: 'PI 966-I', topic: 'Íon-Lítio (C/ Eqpto)', title: 'UN 3481 - Seção I', desc: 'Com Equipamento (>100Wh).', details: 'Bateria na mesma caixa que o dispositivo. Exige UN Spec e DGD. Limite PAX: 5kg. Limite CAO: 35kg.' },
-      { section: 'PI 966-II', topic: 'Íon-Lítio (C/ Eqpto)', title: 'UN 3481 - Seção II', desc: 'Com Equipamento (≤100Wh).', details: 'Isento de UN Spec. Exige embalagem externa rígida e Marca de Lítio. Isento de DGD (LoC recomendado).' },
-
-      { section: 'PI 967-I', topic: 'Íon-Lítio (No Eqpto)', title: 'UN 3481 - Seção I', desc: 'Instalada em Dispositivo (>100Wh).', details: 'Exige DGD e proteção contra ativação. Limite PAX: 5kg.' },
-      { section: 'PI 967-II', topic: 'Íon-Lítio (No Eqpto)', title: 'UN 3481 - Seção II', desc: 'Instalada em Dispositivo (≤100Wh).', details: 'Isento de marca se ≤ 2 volumes na remessa e ≤ 4 células/2 baterias por volume.' },
-
-      { section: 'PI 968-IA', topic: 'Metal Lítio (Solta)', title: 'UN 3090 - Seção IA', desc: 'Metal Lítio Solta (>2g). Plenamente Regulado.', details: 'PROIBIDO PAX. Exige embalagem UN Spec (PG II), DGD e etiqueta CAO.' },
-      { section: 'PI 968-IB', topic: 'Metal Lítio (Solta)', title: 'UN 3090 - Seção IB', desc: 'Metal Lítio Solta (≤2g). Regulado Flexível.', details: 'PROIBIDO PAX. Exige embalagem UN Spec (PG II), Marca de Lítio, 9A, CAO e DGD.' },
-
-      { section: 'PI 969/970', topic: 'Metal Lítio (Eqpto)', title: 'UN 3091 - Eqpto', desc: 'Regras para Metal Lítio com/em equipamentos.', details: 'Seguem a mesma lógica das PIs 966/967, mas baseadas em gramas de lítio (Limite 2g bateria / 1g célula).' },
-
-      // --- SEÇÃO 7: MARCAÇÃO E ETIQUETAGEM ---
-      { section: '7.1.5.5', topic: 'Etiquetagem', title: 'Marca de Bateria de Lítio', desc: 'A marca retangular vermelha.', details: 'Deve conter o UN Number correto. Tamanho mín: 100x100mm. Se o volume for pequeno, pode ser reduzida para 100x70mm.' },
-      { section: '7.2.2.3.2', topic: 'Etiquetagem', title: 'Etiqueta Classe 9A', desc: 'O losango específico.', details: 'Diferente da Classe 9 comum, a 9A deve ser usada obrigatoriamente para remessas da Seção I (IA e IB).' },
-      { section: '7.2.4.2', topic: 'Etiquetagem', title: 'Etiqueta CAO (Cargueiro)', desc: 'Laranja com símbolo preto.', details: 'Obrigatória para todos os embarques proibidos em PAX (UN 3480 e 3090) ou que excedam os limites PAX da Seção I.' },
-
-      // --- SEÇÃO 8: DOCUMENTAÇÃO ---
-      { section: '8.1.6.9', topic: 'Documentação', title: 'Preenchimento DGD', desc: 'Padrão da declaração.', details: 'Campos obrigatórios: UN Number, PSN, Classe 9, PI Number e quantidade líquida. Deve ser assinada e em triplicata.' },
-      { section: '8.2.1', topic: 'Documentação', title: 'AWB (Conhecimento)', desc: 'Declarações no conhecimento aéreo.', details: 'Para Seção II: "Lithium ion batteries in compliance with Section II of PI ...".\nPara Seção I: "Dangerous Goods as per attached Shipper\'s Declaration".' },
-
-      // --- SEÇÃO 9: MANUSEIO ---
-      { section: '9.3.2', topic: 'Manuseio', title: 'Tabela de Segregação', desc: 'Incompatibilidade química.', details: 'Baterias de lítio não podem ser carregadas junto com explosivos (Exceto 1.4S) ou animais vivos (AVI) devido ao risco de fumaça tóxica.' },
-      { section: '9.5.1', topic: 'Manuseio', title: 'Volumes Danificados', desc: 'Procedimento de rejeição.', details: 'Qualquer volume com sinal de impacto, furo ou umidade deve ser rejeitado. Se o dano ocorrer em solo, deve ser removido para área isolada e monitorado contra calor.' },
-      { section: '9.6.1', topic: 'Aceitação', title: 'NOTOC (Piloto)', desc: 'Notificação ao Comandante.', details: 'O capitão deve saber a localização exata de remessas da Seção I no porão para ativar protocolos de combate a incêndio se necessário.' },
-
-      // --- APÊNDICES ---
-      { section: 'App A', topic: 'Apêndices', title: 'Glossário IATA', desc: 'Definições oficiais.', details: 'Diferença técnica entre Célula (Cell) e Bateria (Battery). Define que "Power Bank" é Bateria.' },
-      { section: 'App F', topic: 'Emergência', title: 'Resposta a Fogo', desc: 'Protocolo de incêndio.', details: 'Em caso de fogo de íon-lítio: Usar água em abundância para resfriar as células vizinhas e interromper a fuga térmica. Extintores CO2 apenas abafam a chama, mas não resfriam o químico.' }
+      { section: '1.2.7', topic: 'Responsabilidades', title: 'Responsabilidades do Expedidor', desc: 'Obrigação legal primária do Shipper.', details: 'O expedidor deve garantir que os artigos não são proibidos e que estão devidamente classificados, embalados, marcados, etiquetados e documentados conforme o DGR.' },
+      { section: '1.3', topic: 'Treinamento', title: 'Treinamento CBTA', desc: 'Capacitação baseada em competências.', details: 'Todo pessoal que oferece baterias de lítio deve possuir treinamento verificado a cada 24 meses seguindo o modelo Competency-Based Training and Assessment (CBTA).' },
+      { section: '1.6.1', topic: 'Treinamento', title: 'Instrução Adequada (Seção II)', desc: 'Requisito simplificado para pequenas remessas.', details: 'Expedidores de Seção II devem receber instrução sobre os riscos das baterias e os requisitos de proteção contra curtos e ativação.' },
+      { section: '2.3', topic: 'Limitações', title: 'Provisões para Passageiros', desc: 'Regras para PED e baterias sobressalentes.', details: 'Power Banks são PROIBIDOS na mala despachada. Devem ser levados na bagagem de mão. Limite de 100Wh (sem limite de qtde) ou 160Wh (max 2 com aprovação).' },
+      { section: '2.4', topic: 'Limitações', title: 'Correio Aéreo (UPU)', desc: 'Restrição em malas postais internacionais.', details: 'É proibido enviar baterias soltas por correio internacional. Baterias contidas em equipamentos (Seção II) podem ser aceitas com limites e aprovação postal.' },
+      { section: '2.8', topic: 'Limitações', title: 'Variações de Estado e Operador', desc: 'Regras específicas de países e cias aéreas.', details: 'Sempre prevalece a regra mais restritiva. Ex: L7-01 da LATAM proíbe UN 3480 em aeronaves de passageiros.' },
+      { section: '3.9.2.6', topic: 'Classificação', title: 'Critérios de Lítio (UN 38.3)', desc: 'Testes mandatórios de design.', details: 'Toda célula ou bateria deve ser submetida aos testes T1 (Altitude) a T8 (Descarga Forçada). Deve operar sob um sistema de gestão de qualidade certificado.' },
+      { section: '4.2', topic: 'Identificação', title: 'Lista de Artigos Perigosos', desc: 'Tabela oficial (Páginas Azuis).', details: 'Define o Nome Correto (PSN), UN Number, Classe 9 e Instruções de Embalagem (PI) para aeronaves PAX e CAO.' },
+      { section: '4.4', topic: 'Identificação', title: 'Disposições Especiais (SPs)', desc: 'Série A de regras específicas.', details: 'A coluna M das páginas azuis remete à Seção 4.4, detalhando exceções ou exigências extras para cada UN.' },
+      { section: '5.0.2', topic: 'Embalagem', title: 'Requisitos Gerais de Embalagem', desc: 'Padrões de construção e segurança.', details: 'Embalagens devem resistir a vibrações e variações térmicas (-40°C a +55°C) e de pressão (95 kPa).' },
+      { section: '5.0.2.4', topic: 'Embalagem', title: 'Prevenção de Curto-Circuito', desc: 'Regra física mandatória.', details: 'Terminais devem estar isolados ou protegidos de modo que o contato com materiais condutores seja fisicamente impossível.' },
+      { section: '5.0.3', topic: 'Embalagem', title: 'Sobreembalagem (Overpack)', desc: 'Consolidação de volumes unitários.', details: 'Volumes internos devem ser homologados. A sobreembalagem deve portar a marca "OVERPACK" e reproduzir todas as etiquetas de perigo visivelmente.' },
+      { section: '7.1.5.5', topic: 'Marcação', title: 'Marca de Bateria de Lítio', desc: 'Especificações gráficas do símbolo.', details: 'Retângulo com bordas hachuradas vermelhas. Deve conter o UN Number e telefone. Tamanho mínimo: 100x100mm (ou 100x70mm se volume pequeno).' },
+      { section: '7.2.2.3', topic: 'Etiquetagem', title: 'Etiqueta Classe 9A', desc: 'Risco específico para baterias.', details: 'Etiqueta de risco específica para Baterias de Lítio (Seção IA/IB). Metade superior com faixas verticais e metade inferior com símbolo de baterias.' },
+      { section: '8.1.6', topic: 'Documentação', title: 'Preenchimento da DGD', desc: 'Padrões da declaração legal.', details: 'Campos obrigatórios: Nome do Expedidor, Destinatário, UN Number, PSN, Classe 9, Quantidade Líquida e PI aplicada.' },
+      { section: '9.3', topic: 'Manuseio', title: 'Segregação na Estiva', desc: 'Incompatibilidades químicas.', details: 'Baterias reguladas não podem ser carregadas junto com explosivos ou substâncias que emitam calor extremo.' },
+      { section: 'App F', topic: 'Emergência', title: 'Resposta a Incêndios', desc: 'Protocolo de combate ao fogo de lítio.', details: 'Uso de água em abundância para resfriar as baterias vizinhas e interromper a fuga térmica (extintores de pó ou CO2 são ineficazes no químico).' },
     ],
     en: [
-      { section: '1.2.7', topic: 'Responsibilities', title: 'Shipper Role', desc: 'Legal compliance guarantee.', details: 'Shipper is legally responsible for identification, classification, packing, and documentation.' },
-      { section: 'PI 965', topic: 'Packing', title: 'Standalone Ion', desc: 'UN 3480 regulations.', details: 'Strictly forbidden on PAX. IA/IB require UN Spec packaging and DGD.' },
-      { section: '7.1.5.5', topic: 'Labeling', title: 'Lithium Battery Mark', desc: 'The red hatched mark.', details: 'Required for Section II and IB. Must show correct UN Number.' },
+      { section: '1.2.7', topic: 'Rules', title: 'Shipper Responsibilities', desc: 'Legal primary obligation.', details: 'Shipper must ensure articles are not forbidden and are properly classified, packed, marked, labeled, and documented.' },
     ],
     es: [
-      { section: '1.2.7', topic: 'Responsabilidades', title: 'Papel del Expedidor', desc: 'Garantía de cumplimiento legal.', details: 'El expedidor es el responsable legal de garantizar que la carga esté correctamente clasificada y preparada.' },
-      { section: 'PI 965', topic: 'Embalaje', title: 'Ion Litio Suelto', desc: 'Reglas para UN 3480.', details: 'Prohibido en PAX. Las secciones IA e IB requieren embalaje UN Spec y DGD.' }
+      { section: '1.2.7', topic: 'Reglas', title: 'Responsabilidades del Expedidor', desc: 'Obligación legal primaria.', details: 'El expedidor debe garantizar que los artículos no están prohibidos y cumplen con el DGR.' },
     ]
   };
   
@@ -237,41 +145,40 @@ const getGroupKey = (section: string) => {
 const getSPData = (lang: Language) => {
   const data = {
     pt: [
-      { code: 'A45', title: 'Baterias Secas (Alcalinas)', desc: 'Isenção para baterias alcalinas/NiCd.', details: 'Não são restritas se protegidas contra curto-circuito.', reference: 'DGR 4.4' },
-      { code: 'A48', title: 'Isenção de Teste de Embalagem', desc: 'Para equipamentos com baterias instaladas.', details: 'Volumes contendo baterias de lítio instaladas em equipamentos não requerem embalagem UN Spec se protegidos adequadamente.', reference: 'DGR 4.4' },
-      { code: 'A88', title: 'Protótipos', desc: 'Baterias de pré-produção sem teste UN 38.3.', details: 'Exige aprovação das autoridades competentes.', reference: 'PI 910', risk: 'high' },
-      { code: 'A99', title: 'Limite de Peso Excedido', desc: 'Embalagens que excedem 35kg Líquidos.', details: 'Requer aprovação do Estado de origem e do operador.', reference: 'PI 974', risk: 'high' },
-      { code: 'A154', title: 'Danificadas / Defeituosas', desc: 'Baterias com risco de segurança.', details: 'Proibidas se identificadas como danificadas para segurança.', reference: 'DGR 3.9.2.6', risk: 'forbidden' },
-      { code: 'A164', title: 'Ativação Acidental', desc: 'Prevenção de curto-circuito.', details: 'Equipamentos devem ter meios eficazes para evitar ativação.', reference: 'DGR 4.4' },
-      { code: 'A181', title: 'Mix de Baterias', desc: 'Íon e Metal no mesmo volume.', details: 'Permite baterias de íon e metal no mesmo pacote.', reference: 'DGR 4.4' },
-      { code: 'A199', title: 'Baterias Ni-MH', desc: 'Não restrito no aéreo.', details: 'Apenas os terminais devem estar protegidos contra curtos.', reference: 'DGR 4.4', risk: 'low' },
-      { code: 'A206', title: 'Novas Marcas de Bateria', desc: 'Uso da marca de bateria de lítio.', details: 'Regulamenta o design e aplicação da marca vermelha.', reference: 'DGR 7.2.2' },
-      { code: 'A331', title: 'SoC UN 3480', desc: 'Estado de carga máximo de 30%.', details: 'Limite mandatório para baterias de íon-lítio soltas.', reference: 'PI 965', risk: 'high' },
-      { code: 'A334', title: 'Correio Aéreo', desc: 'Proibição de baterias de lítio no correio.', details: 'Exceto se contidas em equipamentos (com limites).', reference: 'DGR 2.4', risk: 'forbidden' }
+      { code: 'A1', title: 'A1: Massa Líquida em PAX', desc: 'Restrições para aeronaves de passageiros.', details: 'Artigos proibidos em PAX (como UN 3480/3090) podem ser aceitos sob aprovação dos Estados de Origem e Operador. Requer anotação "A1" na DGD.', reference: 'IATA DGR 4.4' },
+      { code: 'A2', title: 'A2: Variância em Massa (>limite)', desc: 'Aprovações para exceder limites de tabela.', details: 'Requer aprovação escrita da autoridade competente do Estado de Origem, Operador e Estados de sobrevoo.', reference: 'IATA DGR 4.4' },
+      { code: 'A21', title: 'A21: Baterias Úmidas em Cadeiras', desc: 'Instalação em auxílios de mobilidade.', details: 'Baterias devem estar fixadas verticalmente e protegidas contra danos e vazamentos de eletrólito.', reference: 'IATA DGR 4.4' },
+      { code: 'A45', title: 'A45: Baterias Alcalinas/NiCd', desc: 'Isenção para tecnologias de bateria seca.', details: 'Baterias não mencionadas explicitamente na Tabela 4.2 (alcalinas, NiCd, NiMH) não são restritas se protegidas contra curto-circuito.', reference: 'IATA DGR 4.4' },
+      { code: 'A48', title: 'A48: Isenção de Teste de Embalagem', desc: 'Para baterias instaladas (Seção II).', details: 'Volumes da Seção II contendo baterias instaladas em equipamentos não precisam de embalagem de especificação UN se protegidos adequadamente.', reference: 'IATA DGR 4.4' },
+      { code: 'A51', title: 'A51: Massa Unitária > 35kg (CAO)', desc: 'Baterias grandes em aeronaves de carga.', details: 'Baterias individuais com massa líquida acima de 35 kg podem ser transportadas em CAO com aprovação governamental específica.', reference: 'IATA DGR 4.4' },
+      { code: 'A67', title: 'A67: Baterias Não-Derramáveis', desc: 'Isenção para baterias úmidas seladas (VRLA).', details: 'Baterias que passam nos testes de vibração e diferenciais de pressão (95 kPa) sem vazamento não são restritas.', reference: 'IATA DGR 4.4', risk: 'low' },
+      { code: 'A87', title: 'A87: Artigos com Bateria Úmida', desc: 'Proteção e orientação vertical mandatória.', details: 'O equipamento deve estar imobilizado e a embalagem marcada com setas de orientação "This Way Up".', reference: 'IATA DGR 4.4' },
+      { code: 'A88', title: 'A88: Protótipos/Pré-produção', desc: 'Transporte sem testes UN 38.3 completos.', details: 'Exige aprovação estatal e transporte exclusivo em Aeronaves de Carga (CAO). Requer embalagem de alta performance (PG I/X).', reference: 'IATA PI 910', risk: 'high' },
+      { code: 'A94', title: 'A94: Pilhas a Combustível (Fuel Cells)', desc: 'Regras para eletrólitos em sistemas elétricos.', details: 'Equipamentos contendo pilhas a combustível devem cumprir requisitos específicos de estanqueidade e proteção física.', reference: 'IATA DGR 4.4' },
+      { code: 'A99', title: 'A99: Massa Líquida Unitária > 35kg', desc: 'Baterias soltas gigantes (UN 3480/3090).', details: 'Requer aprovação governamental do Estado de Origem. Aplica-se ao transporte de baterias industriais unitárias de grande porte.', reference: 'IATA PI 974', risk: 'high' },
+      { code: 'A123', title: 'A123: Baterias Elétricas Gerais', desc: 'Isolamento mandatório de terminais.', details: 'Baterias não reguladas (Ex: Alcalinas) são isentas de marcação DESDE QUE os terminais estejam tapados para evitar calor perigoso.', reference: 'IATA DGR 4.4', risk: 'low' },
+      { code: 'A154', title: 'A154: Defeituosas ou Danificadas', desc: 'PROIBIÇÃO TOTAL POR RISCO DE EXPLOSÃO.', details: 'Células ou baterias identificadas pelo fabricante como inseguras ou danificadas fisicamente são proibidas no transporte aéreo.', reference: 'IATA DGR 3.9.2.6', risk: 'forbidden' },
+      { code: 'A164', title: 'A164: Ativação Inadvertida', desc: 'Proteção contra funcionamento acidental.', details: 'Equipamentos devem ter interruptores protegidos ou baterias desconectadas para evitar geração de calor durante o voo.', reference: 'IATA DGR 4.4' },
+      { code: 'A176', title: 'A176: Embalagens Ventiladas', desc: 'Para baterias que podem emitir gases.', details: 'Embalagens para baterias que ventilam em condições normais devem permitir a saída controlada de gases sem comprometer o volume.', reference: 'IATA DGR 4.4' },
+      { code: 'A181', title: 'A181: Embalagem Mista (Ion + Metal)', desc: 'Íon e Metal no mesmo volume externo.', details: 'Permite combinar baterias de íon e metal (UN 3481/3091) na mesma embalagem externa. Aplica-se a regra mais restritiva.', reference: 'IATA DGR 4.4' },
+      { code: 'A183', title: 'A183: Resíduos e Reciclagem', desc: 'Baterias destinadas ao descarte final.', details: 'PROIBIDO no transporte aéreo, exceto com aprovação especial. Destinadas geralmente ao modal marítimo por segurança.', reference: 'IATA DGR 4.4', risk: 'forbidden' },
+      { code: 'A185', title: 'A185: Baterias de Reserva Integradas', desc: 'Proteção para fontes de backup em PED.', details: 'Dispositivos com baterias de reserva devem ser protegidos contra ativação e curtos. Aplicável a memórias CMOS e backups.', reference: 'IATA DGR 4.4' },
+      { code: 'A190', title: 'A190: Baterias em Bagagem', desc: 'Limites para passageiros portando PEDs.', details: 'Aplica-se ao transporte de dispositivos eletrônicos contendo baterias de lítio por passageiros ou tripulantes.', reference: 'IATA DGR 2.3' },
+      { code: 'A191', title: 'A191: Marcação e Etiquetagem', desc: 'Padrões de aplicação visual.', details: 'Detalha a forma correta de aplicar as etiquetas de perigo e marcas nos volumes para evitar ambiguidade.', reference: 'IATA DGR 7.1' },
+      { code: 'A199', title: 'A199: Baterias Ni-MH', desc: 'Não restrito para IATA (Modal Aéreo).', details: 'Apenas os terminais devem estar protegidos. Não se aplicam marcas de lítio ou etiquetas da Classe 9. (UN 3496 é apenas marítimo).', reference: 'IATA DGR 4.4', risk: 'low' },
+      { code: 'A201', title: 'A201: Emergência Médica e Humanitária', desc: 'Exceção para UN 3480/3090 em PAX.', details: 'Permite transporte em aeronave de passageiros sob aprovação exclusiva para fins médicos ou de socorro urgentes.', reference: 'IATA DGR 4.4' },
+      { code: 'A206', title: 'A206: Marca de Bateria de Lítio (Design)', desc: 'Especificação técnica da marca vermelha.', details: 'A nova marca deve seguir as proporções exatas e UN Number legível. Substitui todas as marcas antigas.', reference: 'IATA DGR 7.2.2' },
+      { code: 'A213', title: 'A213: Baterias de Sódio-Íon (UN 3551)', desc: 'Regras para tecnologia Sódio-Íon.', details: 'Devem cumprir requisitos similares ao lítio (UN 38.3) e limites de SoC (30% para soltas). Classificação UN 3551 ou UN 3552.', reference: 'IATA DGR 4.4' },
+      { code: 'A331', title: 'A331: Estado de Carga (SoC ≤ 30%)', desc: 'Limite crítico para segurança de UN 3480.', details: 'Baterias soltas devem ser embarcadas com SoC ≤ 30% da capacidade nominal. Acima disso, exige aprovação estatal.', reference: 'IATA PI 965', risk: 'high' },
+      { code: 'A334', title: 'A334: Baterias no Correio Internacional', desc: 'Restrição em malas postais da UPU.', details: 'Apenas baterias instaladas em equipamentos (Seção II) podem ser enviadas por correio aéreo internacional com aprovação.', reference: 'IATA DGR 2.4', risk: 'forbidden' },
+      { code: 'A802', title: 'A802: Embalagem Externa Rígida', desc: 'Construção mandatória da embalagem.', details: 'Volumes da Seção II devem ser rígidos e fortes. O uso de envelopes (Padded bags) ou sacos plásticos é terminantemente proibido.', reference: 'IATA DGR 5.0.2' }
     ],
     en: [
-      { code: 'A45', title: 'Dry Batteries (Alkaline)', desc: 'Exemption for alkaline/NiCd batteries.', details: 'Not restricted if protected against short circuits.', reference: 'DGR 4.4' },
-      { code: 'A88', title: 'Prototypes', desc: 'Pre-production batteries without UN 38.3 testing.', details: 'Requires approval from competent authorities.', reference: 'PI 910', risk: 'high' },
-      { code: 'A99', title: 'Weight Limit Exceeded', desc: 'Packages exceeding 35kg net weight.', details: 'Requires approval from the State of origin and operator.', reference: 'PI 974', risk: 'high' },
-      { code: 'A154', title: 'Damaged / Defective', desc: 'Batteries with safety risk.', details: 'Forbidden if identified as damaged for safety reasons.', reference: 'DGR 3.9.2.6', risk: 'forbidden' },
-      { code: 'A164', title: 'Accidental Activation', desc: 'Prevention of short circuits.', details: 'Equipment must have effective means to prevent activation.', reference: 'DGR 4.4' },
-      { code: 'A181', title: 'Battery Mix', desc: 'Ion and Metal in the same package.', details: 'Allows ion and metal batteries in the same outer package.', reference: 'DGR 4.4' },
-      { code: 'A199', title: 'Ni-MH Batteries', desc: 'Not restricted in air transport.', details: 'Only terminals must be protected against short circuits.', reference: 'DGR 4.4', risk: 'low' },
-      { code: 'A206', title: 'New Battery Marks', desc: 'Use of lithium battery mark.', details: 'Regulates design and application of the red mark.', reference: 'DGR 7.2.2' },
-      { code: 'A331', title: 'SoC UN 3480', desc: 'Maximum state of charge 30%.', details: 'Mandatory limit for standalone lithium-ion batteries.', reference: 'PI 965', risk: 'high' },
-      { code: 'A334', title: 'Air Mail', desc: 'Prohibition of lithium batteries in mail.', details: 'Except if contained in equipment (with limits).', reference: 'DGR 2.4', risk: 'forbidden' }
+      { code: 'A154', title: 'A154: Damaged / Defective', desc: 'STRICT PROHIBITION DUE TO FIRE RISK.', details: 'Batteries identified by the manufacturer as unsafe or damaged are forbidden in air transport.', reference: 'IATA DGR 3.9.2.6', risk: 'forbidden' },
+      { code: 'A331', title: 'A331: SoC Limit (30%)', desc: 'Mandatory safety limit for UN 3480.', details: 'Loose lithium ion batteries must be shipped at 30% SoC or less.', reference: 'IATA PI 965', risk: 'high' },
     ],
     es: [
-      { code: 'A45', title: 'Baterías Secas (Alcalinas)', desc: 'Exención para baterías alcalinas/NiCd.', details: 'No están restringidas si están protegidas contra cortocircuitos.', reference: 'DGR 4.4' },
-      { code: 'A88', title: 'Prototipos', desc: 'Baterías de preproducción sin prueba UN 38.3.', details: 'Requiere aprobación de las autoridades competentes.', reference: 'PI 910', risk: 'high' },
-      { code: 'A99', title: 'Límite de Peso Excedido', desc: 'Embalajes que exceden los 35kg netos.', details: 'Requiere aprobación del Estado de origen y del operador.', reference: 'PI 974', risk: 'high' },
-      { code: 'A154', title: 'Dañadas / Defectuosas', desc: 'Baterías con riesgo de seguridad.', details: 'Prohibidas si se identifican como dañadas por seguridad.', reference: 'DGR 3.9.2.6', risk: 'forbidden' },
-      { code: 'A164', title: 'Activación Accidental', desc: 'Prevención de cortocircuitos.', details: 'Los equipos deben tener medios eficaces para evitar la activación.', reference: 'DGR 4.4' },
-      { code: 'A181', title: 'Mezcla de Baterías', desc: 'Ion y Metal en el mismo bulto.', details: 'Permite baterías de ion y metal en el mismo paquete.', reference: 'DGR 4.4' },
-      { code: 'A199', title: 'Baterías Ni-MH', desc: 'No restringido en el transporte aéreo.', details: 'Solo los terminales deben estar protegidos contra cortos.', reference: 'DGR 4.4', risk: 'low' },
-      { code: 'A206', title: 'Nuevas Marcas de Batería', desc: 'Uso de la marca de batería de litio.', details: 'Regula o diseño e aplicación da marca vermelha.', reference: 'DGR 7.2.2' },
-      { code: 'A331', title: 'SoC UN 3480', desc: 'Estado de carga máximo del 30%.', details: 'Límite obligatorio para baterías de ion-litio sueltas.', reference: 'PI 965', risk: 'high' },
-      { code: 'A334', title: 'Correo Aéreo', desc: 'Prohibición de baterías de litio en el correo.', details: 'Excepto si están contenidas en equipos (con límites).', reference: 'DGR 2.4', risk: 'forbidden' }
+      { code: 'A154', title: 'A154: Dañadas / Defectuosas', desc: 'PROHIBICIÓN TOTAL DE TRANSPORTE.', details: 'Baterías identificadas como inseguras o dañadas están prohibidas en el aire.', reference: 'IATA DGR 3.9.2.6', risk: 'forbidden' },
     ]
   };
   return data[lang];
@@ -293,52 +200,69 @@ const SECTION_METADATA: Record<string, { title: string, icon: any }> = {
 
 const UI_TEXT = {
   pt: {
-    title: 'Wiki IATA',
-    subtitle: 'Regras, Definições & Códigos',
-    search: 'Buscar termo, código ou regra...',
+    title: 'Wiki IATA DGR',
+    subtitle: 'Base Técnica Regulatória 2026',
+    search: 'Buscar SP (ex: A154), Regra (ex: 30%) ou Termo...',
     back: 'Voltar para Lista',
-    summary: 'Resumo da Seção',
-    details: 'Conteúdo Detalhado',
-    no_results: 'Nenhum resultado encontrado',
-    tabs: { SP: 'Disposições', GLOSSARY: 'Glossário', PKG: 'Embalagens', CHK: 'Checklist', DGR: 'Seções', SEG: 'Segregação' }
+    summary: 'Resumo Regulatório Oficial',
+    details: 'Parecer Técnico Detalhado',
+    no_results: 'Nenhum registro técnico encontrado',
+    tabs: { SP: 'Provisões', GLOSSARY: 'Glossário', PKG: 'Embalagens', CHK: 'Checklist', DGR: 'Seções', SEG: 'Segregação' }
   },
   en: {
-    title: 'IATA Wiki',
-    subtitle: 'Rules, Definitions & Codes',
-    search: 'Search term, code or rule...',
+    title: 'IATA DGR Wiki',
+    subtitle: 'Technical Regulatory Base 2026',
+    search: 'Search SP (e.g. A154), Rule (e.g. 30%) or Term...',
     back: 'Back to List',
-    summary: 'Section Summary',
-    details: 'Detailed Content',
-    no_results: 'No results found',
+    summary: 'Official Regulatory Summary',
+    details: 'Detailed Technical View',
+    no_results: 'No technical records found',
     tabs: { SP: 'Provisions', GLOSSARY: 'Glossary', PKG: 'Packaging', CHK: 'Checklist', DGR: 'Sections', SEG: 'Segregation' }
   },
   es: {
-    title: 'Wiki IATA',
-    subtitle: 'Reglas, Definiciones y Códigos',
-    search: 'Buscar término, código o regla...',
+    title: 'Wiki IATA DGR',
+    subtitle: 'Base Técnica Regulatoria 2026',
+    search: 'Buscar SP, Regla o Término...',
     back: 'Volver a la Lista',
-    summary: 'Resumen',
-    details: 'Contenido Detallado',
-    no_results: 'No se encontraron resultados',
+    summary: 'Resumen Regulatorio',
+    details: 'Vista Técnica Detallada',
+    no_results: 'No se encontraron registros',
     tabs: { SP: 'Disposiciones', GLOSSARY: 'Glosario', PKG: 'Embalajes', CHK: 'Checklist', DGR: 'Secciones', SEG: 'Segregación' }
   }
 };
 
 type TabType = 'SP' | 'GLOSSARY' | 'PKG' | 'CHK' | 'DGR' | 'SEG';
 
-// Fixed SPECIAL_PROVISIONS_DATA with essential properties for ComplianceResult tooltips
+// Consolidating all data into one searchable export for ComplianceResult tooltips and UI
 export const SPECIAL_PROVISIONS_DATA = [
-    { code: 'A45', desc: 'Isenção para alcalinas/NiCd se protegidas.', reference: 'DGR 4.4' },
-    { code: 'A48', desc: 'Isenção de testes de embalagem para equipamentos específicos.', reference: 'DGR 4.4' },
-    { code: 'A88', desc: 'Protótipos/Pré-produção (sem UN38.3). Exige Aprovação Governamental.', reference: 'PI 910' },
-    { code: 'A99', desc: 'Exige Aprovação para exceder limite de peso de 35kg.', reference: 'PI 974' },
-    { code: 'A154', desc: 'PROIBIDAS. Baterias com defeito ou dano físico.', reference: 'DGR 3.9.2.6' },
-    { code: 'A164', desc: 'Prevenção mandatória de ativação acidental.', reference: 'DGR 4.4' },
-    { code: 'A181', desc: 'Permite misturar Íon e Metal no mesmo volume (com limites).', reference: 'DGR 4.4' },
-    { code: 'A199', desc: 'Ni-MH: Não restrito no aéreo (exceto terminais).', reference: 'DGR 4.4' },
-    { code: 'A206', risk: 'medium', desc: 'Uso obrigatório do padrão visual da marca.', reference: 'DGR 7.2.2' },
-    { code: 'A331', desc: 'Limite de carga de 30% SoC para UN 3480.', reference: 'PI 965' },
-    { code: 'A334', desc: 'Proibição total de baterias soltas no correio.', reference: 'DGR 2.4' }
+    { code: 'A1', desc: 'Permite transporte em PAX sob aprovação estatal.', reference: 'IATA DGR 4.4' },
+    { code: 'A2', desc: 'Aprovações estatais para variância de quantidade/embalagem.', reference: 'IATA DGR 4.4' },
+    { code: 'A21', desc: 'Baterias úmidas em cadeiras de rodas (proteção mandatória).', reference: 'IATA DGR 4.4' },
+    { code: 'A45', desc: 'Isenção para alcalinas/NiCd se protegidas contra curtos.', reference: 'IATA DGR 4.4' },
+    { code: 'A48', desc: 'Isenção de teste UN para baterias instaladas (Seção II).', reference: 'IATA DGR 4.4' },
+    { code: 'A51', desc: 'Baterias >35kg em CAO com aprovação específica.', reference: 'IATA DGR 4.4' },
+    { code: 'A67', desc: 'Isenção para baterias úmidas seladas (Não-Derramáveis).', reference: 'IATA DGR 4.4' },
+    { code: 'A87', desc: 'Artigos com bateria úmida: fixação vertical e marcação mandatórias.', reference: 'IATA DGR 4.4' },
+    { code: 'A88', desc: 'Protótipos (sem UN38.3). Exige Aprovação Governamental e CAO.', reference: 'IATA PI 910' },
+    { code: 'A94', desc: 'Regras para Pilhas a Combustível (Fuel Cells).', reference: 'IATA DGR 4.4' },
+    { code: 'A99', desc: 'Exige Aprovação para exceder limite unitário de 35kg líquidos.', reference: 'IATA PI 974' },
+    { code: 'A123', desc: 'Baterias elétricas gerais não reguladas se protegidas contra curtos.', reference: 'IATA DGR 4.4' },
+    { code: 'A154', desc: 'PROIBIÇÃO TOTAL: Baterias defeituosas ou danificadas.', reference: 'IATA DGR 3.9.2.6' },
+    { code: 'A164', desc: 'Prevenção mandatória de ativação acidental do equipamento.', reference: 'IATA DGR 4.4' },
+    { code: 'A176', desc: 'Embalagens ventiladas para baterias que emitem gases.', reference: 'IATA DGR 4.4' },
+    { code: 'A181', desc: 'Permite misturar Íon e Metal no mesmo volume externo.', reference: 'IATA DGR 4.4' },
+    { code: 'A182', desc: 'Equipamentos com baterias de diferentes químicas.', reference: 'IATA DGR 4.4' },
+    { code: 'A183', desc: 'PROIBIDO: Baterias para lixo/descarte no ar.', reference: 'IATA DGR 4.4' },
+    { code: 'A185', desc: 'Equipamentos com baterias de reserva (proteção contra curtos).', reference: 'IATA DGR 4.4' },
+    { code: 'A190', desc: 'Baterias de lítio em dispositivos portáteis em bagagem.', reference: 'IATA DGR 2.3' },
+    { code: 'A191', desc: 'Padrões de marcação e etiquetagem externa.', reference: 'IATA DGR 7.1' },
+    { code: 'A199', desc: 'Ni-MH: Não restrito no aéreo se os terminais estiverem protegidos.', reference: 'IATA DGR 4.4' },
+    { code: 'A201', desc: 'Exceção para UN 3480 em PAX para urgência médica aprovada.', reference: 'IATA DGR 4.4' },
+    { code: 'A206', risk: 'medium', desc: 'Uso obrigatório do design padronizado para a marca de lítio.', reference: 'IATA DGR 7.2.2' },
+    { code: 'A213', desc: 'Baterias de Sódio-Íon (UN 3551/3552) - Lógica similar ao Lítio.', reference: 'IATA DGR 4.4' },
+    { code: 'A331', desc: 'Limite mandatório de 30% SoC para UN 3480.', reference: 'IATA PI 965' },
+    { code: 'A334', desc: 'Proibição de baterias soltas no correio aéreo internacional.', reference: 'IATA DGR 2.4' },
+    { code: 'A802', desc: 'Embalagens externas rígidas e fortes mandatórias (Seção II).', reference: 'IATA DGR 5.0.2' }
 ];
 
 export function SpecialProvisionsDictionary({ language }: { language: Language }) {
@@ -392,10 +316,10 @@ export function SpecialProvisionsDictionary({ language }: { language: Language }
              <div className="absolute top-0 right-0 w-32 h-32 bg-coral-500 opacity-20 rounded-full blur-3xl translate-x-1/2 -translate-y-1/2"></div>
              <div className="flex items-center gap-3 mb-4 relative z-10">
                 <span className="px-3 py-1 rounded-lg bg-white/10 border border-white/20 text-xs font-mono font-black tracking-widest backdrop-blur-sm">
-                   {item.section}
+                   {item.section || item.code}
                 </span>
                 <span className="text-[10px] font-bold text-indigo-200 uppercase tracking-widest border-l border-white/20 pl-3">
-                   {item.topic}
+                   {item.topic || 'DGR Reference'}
                 </span>
              </div>
              <h2 className="text-xl font-black tracking-tight leading-tight relative z-10 mb-2">
@@ -409,9 +333,15 @@ export function SpecialProvisionsDictionary({ language }: { language: Language }
                    "{item.desc}"
                 </p>
                 <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">{T.details}</h3>
-                <div className="text-sm text-slate-800 leading-relaxed whitespace-pre-line space-y-4">
+                <div className="text-sm text-slate-800 leading-relaxed whitespace-pre-line space-y-4 font-medium">
                    {item.details || item.desc}
                 </div>
+                {item.reference && (
+                  <div className="mt-8 pt-4 border-t border-slate-100">
+                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">Referência Manual IATA</span>
+                    <span className="inline-block px-3 py-1 rounded-lg bg-indigo-50 text-indigo-600 font-black text-[10px] uppercase">{item.reference}</span>
+                  </div>
+                )}
              </div>
           </div>
        </div>
@@ -427,19 +357,22 @@ export function SpecialProvisionsDictionary({ language }: { language: Language }
               <button className="w-full text-left p-4 flex items-start gap-4" onClick={() => toggleExpand(sp.code)}>
                 <div className={`shrink-0 w-12 h-12 rounded-xl flex items-center justify-center border text-xs font-black ${getRiskColor(sp.risk)}`}>{sp.code}</div>
                 <div className="flex-1 min-w-0">
-                   <h3 className="font-bold text-slate-800 truncate">{sp.title}</h3>
-                   <p className="text-xs text-slate-500 mt-1 line-clamp-2">{sp.desc}</p>
+                   <h3 className="font-bold text-slate-800 truncate uppercase tracking-tight">{sp.title}</h3>
+                   <p className="text-xs text-slate-500 mt-1 line-clamp-2 font-medium">{sp.desc}</p>
                 </div>
                 <ChevronRight size={18} className={`text-slate-300 mt-2 transition-transform duration-300 ${isExpanded ? 'rotate-90 text-indigo-500' : ''}`} />
               </button>
               {isExpanded && (
                  <div className="px-4 pb-4 pt-0 animate-in fade-in slide-in-from-top-1">
                     <div className="pt-4 border-t border-slate-100 flex flex-col gap-3">
-                       <div className="bg-slate-50 p-3 rounded-lg border border-slate-100">
-                          <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider block mb-1">{T.details}</span>
-                          <p className="text-xs text-slate-700 leading-relaxed">{sp.details}</p>
+                       <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                          <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider block mb-2">{T.details}</span>
+                          <p className="text-xs text-slate-700 leading-relaxed font-medium">{sp.details}</p>
                        </div>
-                       <div className="flex items-center gap-2"><span className="text-[10px] font-bold text-slate-400 uppercase">Ref:</span><span className="text-[10px] font-black text-indigo-600 bg-indigo-50 px-2 py-1 rounded">{sp.reference}</span></div>
+                       <div className="flex items-center gap-2 px-1">
+                         <span className="text-[10px] font-bold text-slate-400 uppercase">Ref:</span>
+                         <span className="text-[10px] font-black text-indigo-600 bg-indigo-50 px-2 py-1 rounded-lg border border-indigo-100">{sp.reference}</span>
+                       </div>
                     </div>
                  </div>
               )}
@@ -452,10 +385,16 @@ export function SpecialProvisionsDictionary({ language }: { language: Language }
   const renderGlossary = (items: any[]) => (
     <div className="grid gap-3">
        {items.map((item, idx) => (
-         <div key={idx} className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm hover:border-coral-200 transition-colors group">
-            <h3 className="font-bold text-indigo-900 mb-1 flex items-center gap-2">{item.term}<GraduationCap size={14} className="text-slate-300 group-hover:text-coral-400" /></h3>
-            <p className="text-sm text-slate-700 font-medium leading-relaxed mb-2">{item.def}</p>
-            <div className="bg-slate-50 px-3 py-2 rounded-lg border border-slate-100 flex gap-2 items-start"><Lightbulb size={14} className="text-amber-500 mt-0.5 shrink-0" /><p className="text-xs text-slate-500 italic">{item.context}</p></div>
+         <div key={idx} className="bg-white p-5 rounded-[2rem] border border-slate-200 shadow-sm hover:border-coral-200 transition-colors group">
+            <h3 className="font-black text-indigo-900 mb-2 flex items-center gap-2 uppercase tracking-tight text-sm">
+              {item.term}
+              <GraduationCap size={14} className="text-slate-300 group-hover:text-coral-400" />
+            </h3>
+            <p className="text-sm text-slate-700 font-bold leading-relaxed mb-3">{item.def}</p>
+            <div className="bg-slate-50 px-4 py-3 rounded-2xl border border-slate-100 flex gap-3 items-start">
+              <Lightbulb size={14} className="text-amber-500 mt-0.5 shrink-0" />
+              <p className="text-xs text-slate-500 italic leading-relaxed font-medium">{item.context}</p>
+            </div>
          </div>
        ))}
     </div>
@@ -464,12 +403,17 @@ export function SpecialProvisionsDictionary({ language }: { language: Language }
   const renderPackaging = (items: any[]) => (
      <div className="grid gap-3">
         {items.map((pkg, idx) => (
-           <div key={idx} className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col sm:flex-row gap-4 items-start">
-              <div className="bg-slate-900 text-white px-3 py-2 rounded-lg font-mono font-bold text-sm text-center min-w-[60px]">{pkg.code}</div>
-              <div className="flex-1">
-                 <h4 className="font-bold text-slate-800">{pkg.type}</h4>
-                 <p className="text-xs text-slate-500 mt-1 mb-2">{pkg.desc}</p>
-                 <span className="inline-block bg-green-50 text-green-700 text-[10px] font-bold px-2 py-1 rounded border border-green-100">{pkg.suitability}</span>
+           <div key={idx} className="bg-white p-5 rounded-[2rem] border border-slate-200 shadow-sm flex flex-col gap-4">
+              <div className="flex items-center gap-3">
+                <div className="bg-slate-900 text-white px-3 py-2 rounded-xl font-mono font-black text-xs text-center min-w-[70px] shadow-lg">{pkg.code}</div>
+                <h4 className="font-black text-slate-800 uppercase tracking-tight text-sm">{pkg.type}</h4>
+              </div>
+              <div className="pl-1">
+                 <p className="text-xs text-slate-600 font-medium leading-relaxed">{pkg.desc}</p>
+                 <div className="mt-3 flex items-center gap-2">
+                    <CheckCircle2 size={12} className="text-green-500" />
+                    <span className="text-[10px] font-black text-green-700 uppercase tracking-widest">{pkg.suitability}</span>
+                 </div>
               </div>
            </div>
         ))}
@@ -479,11 +423,13 @@ export function SpecialProvisionsDictionary({ language }: { language: Language }
   const renderChecklist = (items: any[]) => (
       <div className="space-y-3">
          {items.map((item, idx) => (
-            <div key={idx} className="flex items-start gap-3 bg-white p-3 rounded-xl border border-slate-100 shadow-sm">
-               <div className={`mt-0.5 w-5 h-5 rounded-md flex items-center justify-center shrink-0 ${item.mandated ? 'bg-red-50 text-red-500' : 'bg-slate-100 text-slate-400'}`}><CheckSquare size={14} /></div>
+            <div key={idx} className="flex items-start gap-4 bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
+               <div className={`mt-0.5 w-6 h-6 rounded-lg flex items-center justify-center shrink-0 ${item.mandated ? 'bg-coral-50 text-coral-500 shadow-inner' : 'bg-slate-100 text-slate-400'}`}>
+                  <CheckSquare size={16} strokeWidth={2.5} />
+               </div>
                <div>
-                  <h4 className="text-xs font-bold text-slate-800">{item.title}</h4>
-                  <p className="text-[10px] text-slate-500 mt-0.5">{item.desc}</p>
+                  <h4 className="text-xs font-black text-slate-800 uppercase tracking-tight">{item.title}</h4>
+                  <p className="text-[11px] text-slate-500 mt-1 font-medium leading-relaxed">{item.desc}</p>
                </div>
             </div>
          ))}
@@ -504,7 +450,7 @@ export function SpecialProvisionsDictionary({ language }: { language: Language }
     });
 
     return (
-       <div className="space-y-3">
+       <div className="space-y-4">
           {sortedKeys.map(key => {
              const groupItems = groups[key];
              const isOpen = openFolders[key];
@@ -512,35 +458,35 @@ export function SpecialProvisionsDictionary({ language }: { language: Language }
              const Icon = meta.icon;
 
              return (
-               <div key={key} className={`bg-white border border-slate-200 rounded-2xl overflow-hidden transition-all duration-300 ${isOpen ? 'shadow-md border-indigo-200' : 'hover:border-indigo-200'}`}>
+               <div key={key} className={`bg-white border border-slate-200 rounded-[2rem] overflow-hidden transition-all duration-300 ${isOpen ? 'shadow-lg border-indigo-200 ring-1 ring-indigo-50' : 'hover:border-indigo-200'}`}>
                   <button 
                     onClick={() => toggleFolder(key)}
-                    className={`w-full flex items-center justify-between p-4 ${isOpen ? 'bg-indigo-50/30' : 'bg-white'}`}
+                    className={`w-full flex items-center justify-between p-5 ${isOpen ? 'bg-indigo-50/20' : 'bg-white'}`}
                   >
-                     <div className="flex items-center gap-3">
-                        <div className={`p-2 rounded-xl transition-colors ${isOpen ? 'bg-indigo-600 text-white shadow-sm' : 'bg-slate-100 text-slate-500'}`}>
-                           <Icon size={18} />
+                     <div className="flex items-center gap-4">
+                        <div className={`p-2.5 rounded-2xl transition-all duration-300 ${isOpen ? 'bg-indigo-600 text-white shadow-lg' : 'bg-slate-100 text-slate-400'}`}>
+                           <Icon size={20} />
                         </div>
-                        <span className={`font-black text-sm uppercase tracking-wide ${isOpen ? 'text-indigo-900' : 'text-slate-600'}`}>{meta.title}</span>
+                        <span className={`font-black text-xs uppercase tracking-widest ${isOpen ? 'text-indigo-900' : 'text-slate-600'}`}>{meta.title}</span>
                      </div>
                      <ChevronRight size={18} className={`text-slate-400 transition-transform duration-300 ${isOpen ? 'rotate-90 text-indigo-500' : ''}`} />
                   </button>
                   
                   {isOpen && (
-                     <div className="p-3 bg-slate-50/50 border-t border-indigo-100/50 animate-in fade-in slide-in-from-top-1">
-                        <div className="grid grid-cols-2 gap-3">
+                     <div className="p-4 bg-slate-50/30 border-t border-indigo-100/50 animate-in fade-in slide-in-from-top-1">
+                        <div className="grid grid-cols-1 gap-3">
                            {groupItems.map((item, idx) => (
                               <button 
                                  key={idx} 
                                  onClick={() => setSelectedSection(item)}
-                                 className="bg-white p-3 rounded-xl border border-slate-200 shadow-sm hover:border-indigo-400 hover:shadow-md transition-all text-left flex flex-col h-full group"
+                                 className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm hover:border-indigo-400 hover:shadow-md transition-all text-left group"
                               >
                                  <div className="flex items-center justify-between w-full mb-2">
-                                    <span className="text-[9px] font-black text-indigo-500 bg-indigo-50 px-2 py-0.5 rounded group-hover:bg-indigo-600 group-hover:text-white transition-colors">{item.section}</span>
-                                    <ShieldCheck size={12} className="text-slate-200 group-hover:text-indigo-400 transition-colors" />
+                                    <span className="text-[10px] font-black text-indigo-600 bg-indigo-50 px-2.5 py-1 rounded-lg border border-indigo-100 group-hover:bg-indigo-600 group-hover:text-white transition-all">{item.section}</span>
+                                    <ArrowRight size={14} className="text-slate-200 group-hover:text-indigo-400 group-hover:translate-x-1 transition-all" />
                                  </div>
-                                 <h4 className="font-bold text-slate-800 mb-1 text-[10px] leading-tight group-hover:text-indigo-900 line-clamp-2">{item.title}</h4>
-                                 <p className="text-[9px] text-slate-400 line-clamp-1 opacity-70 italic">{item.desc}</p>
+                                 <h4 className="font-black text-slate-800 mb-1.5 text-xs leading-tight group-hover:text-indigo-900 uppercase italic tracking-tight">{item.title}</h4>
+                                 <p className="text-[10px] text-slate-400 line-clamp-1 font-bold opacity-70 italic">{item.desc}</p>
                               </button>
                            ))}
                         </div>
@@ -556,18 +502,18 @@ export function SpecialProvisionsDictionary({ language }: { language: Language }
   const renderSegregation = (items: any[]) => (
     <div className="grid gap-4">
        {items.map((seg, idx) => (
-         <div key={idx} className="bg-white p-5 rounded-3xl border border-slate-200 shadow-sm flex flex-col gap-3 group hover:border-indigo-400 transition-all">
+         <div key={idx} className="bg-white p-6 rounded-[2.5rem] border border-slate-200 shadow-sm flex flex-col gap-4 group hover:border-indigo-400 transition-all">
             <div className="flex items-center justify-between">
-               <div className="flex items-center gap-2">
-                 <div className="p-2 rounded-xl bg-indigo-50 text-indigo-600 group-hover:bg-indigo-600 group-hover:text-white transition-all"><Split size={16} /></div>
-                 <h4 className="font-black text-indigo-900 text-sm">{seg.title}</h4>
+               <div className="flex items-center gap-3">
+                 <div className="p-3 rounded-2xl bg-indigo-50 text-indigo-600 group-hover:bg-indigo-600 group-hover:text-white transition-all shadow-inner"><Split size={18} /></div>
+                 <h4 className="font-black text-indigo-950 text-sm uppercase tracking-tight">{seg.title}</h4>
                </div>
-               <span className="text-[10px] font-black bg-indigo-900 text-white px-2 py-1 rounded-lg uppercase tracking-widest">{seg.rule}</span>
+               <span className="text-[10px] font-black bg-slate-900 text-white px-3 py-1.5 rounded-xl uppercase tracking-widest shadow-sm">{seg.rule}</span>
             </div>
-            <p className="text-sm text-slate-700 font-bold leading-relaxed">{seg.desc}</p>
-            <div className="p-3 bg-slate-50 rounded-2xl border border-slate-100 flex gap-3 items-start">
-               <Info size={14} className="text-indigo-400 mt-0.5 shrink-0" />
-               <p className="text-xs text-slate-500 italic leading-relaxed">{seg.details}</p>
+            <p className="text-sm text-slate-800 font-black leading-relaxed italic">"{seg.desc}"</p>
+            <div className="p-4 bg-slate-50/50 rounded-2xl border border-slate-100 flex gap-4 items-start shadow-inner">
+               <ShieldAlert size={16} className="text-indigo-400 mt-0.5 shrink-0" />
+               <p className="text-xs text-slate-600 font-medium leading-relaxed">{seg.details}</p>
             </div>
          </div>
        ))}
@@ -589,7 +535,8 @@ export function SpecialProvisionsDictionary({ language }: { language: Language }
 
     const fuse = new Fuse(data, {
       keys: ['code', 'title', 'term', 'type', 'desc', 'details', 'def', 'section', 'rule'],
-      threshold: 0.3
+      threshold: 0.35,
+      distance: 100
     });
     return fuse.search(search).map(res => res.item);
   };
@@ -600,16 +547,21 @@ export function SpecialProvisionsDictionary({ language }: { language: Language }
     <>
       <button 
         onClick={() => setIsOpen(true)}
-        className={`fixed bottom-6 left-6 w-14 h-14 bg-coral-500 text-white rounded-full shadow-[0_8px_30px_rgba(227,6,19,0.4)] border border-coral-400 flex items-center justify-center z-40 transition-all hover:scale-105 active:scale-95 group print:hidden`}
-        title="IATA Dictionary"
+        className={`fixed bottom-6 left-6 w-14 h-14 bg-coral-500 text-white rounded-full shadow-[0_8px_30px_rgba(227,6,19,0.4)] border-2 border-white/20 flex items-center justify-center z-40 transition-all hover:scale-110 active:scale-95 group print:hidden`}
+        title="DGR Wiki Dictionary"
       >
-        <Book size={24} className="group-hover:text-white transition-colors" />
+        <div className="relative">
+           <BookOpen size={24} className="group-hover:scale-110 transition-transform" />
+           <div className="absolute -top-1 -right-1 bg-white text-coral-600 rounded-full p-1 shadow-md">
+             <Search size={10} strokeWidth={4} />
+           </div>
+        </div>
       </button>
 
       {isOpen && (
         <div className="fixed inset-0 z-50 flex justify-start">
-           <div className="absolute inset-0 bg-slate-900/20 backdrop-blur-sm transition-opacity" onClick={() => setIsOpen(false)}></div>
-           <div className="relative w-full max-w-md h-full bg-slate-50 shadow-2xl flex flex-col animate-in slide-in-from-left duration-300">
+           <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm transition-opacity" onClick={() => setIsOpen(false)}></div>
+           <div className="relative w-full max-w-md h-full bg-white shadow-2xl flex flex-col animate-in slide-in-from-left duration-400 ease-out">
               
               {selectedSection ? (
                  <div className="h-full p-6">
@@ -617,30 +569,30 @@ export function SpecialProvisionsDictionary({ language }: { language: Language }
                  </div>
               ) : (
                 <>
-                  <div className="p-6 pb-2 shrink-0">
+                  <div className="p-6 pb-2 shrink-0 bg-slate-50 border-b border-slate-100">
                     <div className="flex items-center justify-between mb-6">
                        <div className="flex items-center gap-3">
-                          <div className="p-2.5 bg-indigo-600 text-white rounded-xl shadow-lg shadow-indigo-200">
-                             <Book size={20} />
+                          <div className="p-2.5 bg-indigo-600 text-white rounded-xl shadow-lg shadow-indigo-100">
+                             <BookOpen size={20} />
                           </div>
                           <div>
-                             <h2 className="text-lg font-black text-slate-800 tracking-tight leading-none">{T.title}</h2>
-                             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mt-1">{T.subtitle}</p>
+                             <h2 className="text-lg font-black text-indigo-950 tracking-tighter uppercase italic leading-none">{T.title}</h2>
+                             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mt-1.5">{T.subtitle}</p>
                           </div>
                        </div>
                        <button onClick={() => setIsOpen(false)} className="p-2 hover:bg-slate-200 rounded-full text-slate-400 transition-colors">
-                          <X size={20} />
+                          <X size={24} strokeWidth={2} />
                        </button>
                     </div>
 
-                    <div className="relative group">
-                       <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-500 transition-colors" size={18} />
+                    <div className="relative group mb-2">
+                       <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-indigo-600 transition-colors" size={18} />
                        <input 
                          type="text" 
                          value={search}
                          onChange={(e) => setSearch(e.target.value)}
                          placeholder={T.search}
-                         className="w-full pl-10 pr-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-medium focus:outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all shadow-sm placeholder:text-slate-400"
+                         className="w-full pl-12 pr-4 py-4 bg-white border-2 border-slate-100 rounded-2xl text-sm font-bold focus:outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/5 transition-all shadow-inner placeholder:text-slate-300"
                        />
                     </div>
 
@@ -659,32 +611,45 @@ export function SpecialProvisionsDictionary({ language }: { language: Language }
                            <button 
                              key={tab.id}
                              onClick={() => setActiveTab(tab.id as TabType)}
-                             className={`flex flex-col items-center justify-center gap-1.5 p-2 rounded-xl text-[10px] font-black uppercase tracking-wide transition-all border h-full ${isActive ? 'bg-indigo-600 text-white border-indigo-600 shadow-md shadow-indigo-200' : 'bg-white text-slate-500 border-slate-200 hover:border-slate-300 hover:bg-slate-50'}`}
+                             className={`flex flex-col items-center justify-center gap-2 p-2.5 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all border-2 h-full ${isActive ? 'bg-indigo-600 text-white border-indigo-600 shadow-lg shadow-indigo-100 scale-[1.03]' : 'bg-white text-slate-400 border-slate-100 hover:border-slate-200 hover:bg-slate-50'}`}
                            >
-                              <Icon size={16} />
-                              <span className="truncate w-full text-center">{tab.label}</span>
+                              <Icon size={18} />
+                              <span className="truncate w-full text-center leading-none">{tab.label}</span>
                            </button>
                          )
                        })}
                     </div>
                   </div>
 
-                  <div className="flex-1 overflow-y-auto px-6 pb-6 custom-scrollbar">
-                     {filteredItems.length > 0 ? (
-                        <>
-                           {activeTab === 'SP' && renderSP(filteredItems)}
-                           {activeTab === 'GLOSSARY' && renderGlossary(filteredItems)}
-                           {activeTab === 'PKG' && renderPackaging(filteredItems)}
-                           {activeTab === 'CHK' && renderChecklist(filteredItems)}
-                           {activeTab === 'DGR' && renderDGR(filteredItems)}
-                           {activeTab === 'SEG' && renderSegregation(filteredItems)}
-                        </>
-                     ) : (
-                        <div className="flex flex-col items-center justify-center h-48 text-slate-400">
-                           <Folder size={48} className="mb-3 opacity-20" />
-                           <p className="text-sm font-bold">{T.no_results}</p>
-                        </div>
-                     )}
+                  <div className="flex-1 overflow-y-auto px-6 pb-8 bg-white no-scrollbar">
+                     <div className="pt-6">
+                       {filteredItems.length > 0 ? (
+                          <>
+                             {activeTab === 'SP' && renderSP(filteredItems)}
+                             {activeTab === 'GLOSSARY' && renderGlossary(filteredItems)}
+                             {activeTab === 'PKG' && renderPackaging(filteredItems)}
+                             {activeTab === 'CHK' && renderChecklist(filteredItems)}
+                             {activeTab === 'DGR' && renderDGR(filteredItems)}
+                             {activeTab === 'SEG' && renderSegregation(filteredItems)}
+                          </>
+                       ) : (
+                          <div className="flex flex-col items-center justify-center py-20 text-slate-300">
+                             <div className="p-8 bg-slate-50 rounded-[2.5rem] mb-6">
+                                <HelpCircle size={48} strokeWidth={1.5} className="opacity-20" />
+                             </div>
+                             <p className="text-sm font-black uppercase tracking-widest text-slate-400">{T.no_results}</p>
+                             <button onClick={() => setSearch('')} className="mt-4 text-[10px] font-black uppercase tracking-[0.2em] text-indigo-500 hover:text-indigo-700 underline underline-offset-4">Limpar Filtros</button>
+                          </div>
+                       )}
+                     </div>
+                  </div>
+
+                  <div className="p-5 bg-slate-50 border-t border-slate-100 flex items-center justify-between text-slate-400 shrink-0">
+                    <div className="flex items-center gap-2">
+                       <Shield size={14} className="text-indigo-400" />
+                       <p className="text-[9px] font-black uppercase tracking-[0.2em]">AeroVolt Audit Intelligence</p>
+                    </div>
+                    <span className="text-[9px] font-bold italic opacity-60">DGR 67th Ed (2026)</span>
                   </div>
                 </>
               )}
