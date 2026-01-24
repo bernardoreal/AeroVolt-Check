@@ -743,7 +743,7 @@ export function App() {
                       <div className="relative z-10">
                         <div className="flex items-baseline gap-2">
                           <span className="text-4xl font-black tracking-tighter text-white">
-                            {result.energy.toFixed(1)}
+                            {result.energy.toFixed(2)}
                           </span>
                           <span className="text-xs font-black text-indigo-300 uppercase">{result.unit}</span>
                           {/* KG Display next to energy if applicable (Lithium Metal) */}

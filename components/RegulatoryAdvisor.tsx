@@ -72,7 +72,7 @@ const RegulatoryAdvisor: React.FC<Props> = ({ specs, result }) => {
      if (result) {
         const hasHistory = messages.length > 1;
         if (!hasHistory) {
-          setMessages([{ role: 'model', text: `Detectei uma nova configuração (${result.unNumber} - ${result.energy.toFixed(1)}${result.unit}). Como posso auxiliar com esta classificação ${result.status}?` }]);
+          setMessages([{ role: 'model', text: `Detectei uma nova configuração (${result.unNumber} - ${result.energy.toFixed(2)}${result.unit}). Como posso auxiliar com esta classificação ${result.status}?` }]);
         }
      }
   }, [result?.unNumber, result?.energy, result?.status]);
