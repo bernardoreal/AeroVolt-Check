@@ -1,8 +1,6 @@
+
 import { GoogleGenAI, Type } from "@google/genai";
 import { BatterySpecs, CalculationResult, BatteryType, Configuration } from "../types";
-
-// Always use const ai = new GoogleGenAI({apiKey: process.env.API_KEY}); as per guidelines.
-//const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
 export const askRegulatoryAdvisor = async (
   question: string,
@@ -13,7 +11,6 @@ export const askRegulatoryAdvisor = async (
   }
 
   const airlineName = context.specs.airline === 'L7' ? 'LATAM Cargo' : context.specs.airline;
-  const isLatam = context.specs.airline === 'L7';
 
   const systemInstruction = `
     Você é o **AeroVolt AI**, Auditor Sênior de Artigos Perigosos (DGR) da **${airlineName}**.
@@ -41,9 +38,11 @@ export const askRegulatoryAdvisor = async (
   `;
 
   try {
+    // Initialize GoogleGenAI client with process.env.API_KEY
+    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
     const response = await ai.models.generateContent({
       model: 'gemini-3-flash-preview',
-      contents: [{ role: 'user', parts: [{ text: promptContext }] }],
+      contents: promptContext,
       config: {
         systemInstruction: systemInstruction,
         temperature: 0.1,
@@ -62,6 +61,8 @@ export const askRegulatoryAdvisor = async (
  */
 export const resolveDevicePreset = async (deviceName: string): Promise<any> => {
   try {
+    // Initialize GoogleGenAI client with process.env.API_KEY
+    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
     const response = await ai.models.generateContent({
       model: 'gemini-3-flash-preview',
       contents: `Determine as especificações de bateria típicas para o dispositivo: "${deviceName}".`,

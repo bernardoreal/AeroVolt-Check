@@ -746,6 +746,12 @@ export function App() {
                             {result.energy.toFixed(1)}
                           </span>
                           <span className="text-xs font-black text-indigo-300 uppercase">{result.unit}</span>
+                          {/* KG Display next to energy if applicable (Lithium Metal) */}
+                          {batteryType === BatteryType.LI_METAL && (
+                            <span className="text-[10px] font-black text-coral-400 uppercase tracking-widest bg-coral-500/10 px-2 py-0.5 rounded-lg border border-coral-500/20">
+                              ({(result.energy / 1000).toFixed(2)} kg)
+                            </span>
+                          )}
                         </div>
                         <div className={`mt-3 inline-block px-3 py-1 rounded-xl font-black text-[9px] uppercase tracking-widest shadow-lg ${
                           result.alertColor === 'red' ? 'bg-red-600 text-white' : 'bg-coral-500 text-white'
